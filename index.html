@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Gravity Flip - Free HTML5 Game</title>
+<meta name="description" content="Play Gravity Flip - Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.">
+<meta name="theme-color" content="#0a0a1a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Gravity Flip - Free HTML5 Game">
+<meta property="og:description" content="Tap to flip gravity and dodge gates in this addictive hyper-casual game. Beat your high score!">
+<meta property="og:url" content="https://balinti.github.io/gravity-flip/">
+<meta property="og:image" content="https://balinti.github.io/gravity-flip/og-image.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4099346100621490" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a1a;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#wrap{position:relative;max-width:420px;max-height:750px;width:100%;height:100vh;margin:0 auto;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#seo{position:absolute;bottom:0;left:0;right:0;max-height:0;overflow:hidden;color:#333;font-size:10px;padding:0 8px}
+body.show-seo #seo{max-height:300px;position:relative;padding:12px 16px;color:#555;font-size:11px;line-height:1.5;background:#0d0d1f}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c"></canvas></div>
+<div id="seo">
+<h2>Gravity Flip - Free Online Hyper-Casual Game</h2>
+<p>Welcome to Gravity Flip, an exciting hyper-casual HTML5 game you can play directly in your browser on any device. In Gravity Flip, you control a glowing orb racing through a narrow tunnel filled with dangerous gates. Tap the screen or press Space to flip between the top and bottom rails, dodging obstacles that come at you in carefully designed patterns.</p>
+<p>Each flip triggers a satisfying Flip Burst dash that propels you forward, and if you time it just right, you'll pass through gates during your brief invulnerability window. Master the art of near-miss grazing to rack up combo multipliers and climb the leaderboard. Collect glowing Sync Orbs placed along riskier routes to boost your score multiplier even further.</p>
+<p>The game starts gently with forgiving patterns, but as your distance grows, gates arrive faster and patterns chain tighter, demanding quick reflexes and precise timing. Your high score is saved automatically so you can always try to beat your personal best. Gravity Flip features smooth particle effects, dynamic HSL color cycling, screen shake feedback, and a clean minimalist design optimized for both desktop and mobile play. No downloads required - just tap and play!</p>
+</div>
+<script>
+'use strict';
+(()=>{
+// === CONSTANTS ===
+const STATES = { START: 0, PLAYING: 1, GAMEOVER: 2 };
+const LS_KEY = 'gfb_best';
+const RAIL_MARGIN = 0.15;
+const PLAYER_R = 10;
+const FLIP_DURATION = 280;
+const IFRAME_START = 80;
+const IFRAME_END = 200;
+const BURST_DIST = 18;
+const BURST_SPRING = 0.92;
+const GAP_MIN = 80;
+const GAP_MAX = 130;
+const GATE_W = 18;
+const BASE_SPEED = 2.2;
+const MAX_SPEED = 5.5;
+const SPEED_RAMP = 0.00012;
+const COMBO_PERFECT_DIST = 18;
+const COMBO_NEARMISS_DIST = 6;
+const PARTICLE_POOL = 200;
+const GAMEOVER_LOCK = 350;
+const SHAKE_GAMEOVER = 8;
+const SHAKE_NEARMISS = 2.5;
+const SHAKE_DECAY = 0.88;
+const ORB_R = 7;
+const ORB_SPAWN_CHANCE = 0.35;
+
+// === CANVAS SETUP ===
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('wrap');
+let W, H, dpr, topRail, botRail, tunnelH;
+
+function resize() {
+  const rect = wrap.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = rect.width;
+  H = rect.height;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  topRail = H * RAIL_MARGIN;
+  botRail = H * (1 - RAIL_MARGIN);
+  tunnelH = botRail - topRail;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// === STATE ===
+let state = STATES.START;
+let score = 0;
+let best = parseInt(localStorage.getItem(LS_KEY)) || 0;
+let dist = 0;
+let combo = 0;
+let multiplier = 1;
+let speed = BASE_SPEED;
+let hue = 0;
+let shakeX = 0, shakeY = 0;
+let shakeAmt = 0;
+let gameoverTime = 0;
+let flashAlpha = 0;
+
+// === PLAYER ===
+const player = {
+  x: 0, y: 0,
+  onTop: false,
+  flipping: false,
+  flipStart: 0,
+  flipFrom: 0,
+  flipTo: 0,
+  burstOffset: 0,
+  trail: []
+};
+
+function playerBaseX() { return W * 0.22; }
+function railY(top) { return top ? topRail + PLAYER_R + 8 : botRail - PLAYER_R - 8; }
+
+function resetPlayer() {
+  player.onTop = false;
+  player.flipping = false;
+  player.flipStart = 0;
+  player.burstOffset = 0;
+  player.x = playerBaseX();
+  player.y = railY(false);
+  player.trail = [];
+}
+
+// === SMOOTHSTEP ===
+function smoothstep(t) {
+  t = Math.max(0, Math.min(1, t));
+  return t * t * (3 - 2 * t);
+}
+
+// === FLIP ===
+function flip(now) {
+  if (player.flipping) return;
+  player.flipping = true;
+  player.flipStart = now;
+  player.flipFrom = player.y;
+  player.onTop = !player.onTop;
+  player.flipTo = railY(player.onTop);
+  player.burstOffset = BURST_DIST;
+}
+
+function updateFlip(now) {
+  if (!player.flipping) return;
+  const elapsed = now - player.flipStart;
+  const t = Math.min(elapsed / FLIP_DURATION, 1);
+  const s = smoothstep(t);
+  player.y = player.flipFrom + (player.flipTo - player.flipFrom) * s;
+  // Arc offset
+  const arc = Math.sin(t * Math.PI) * tunnelH * 0.08;
+  player.x = playerBaseX() + arc;
+  if (t >= 1) {
+    player.flipping = false;
+    player.y = player.flipTo;
+    player.x = playerBaseX();
+  }
+  // Burst spring-back
+  player.burstOffset *= BURST_SPRING;
+}
+
+function isInvulnerable(now) {
+  if (!player.flipping) return false;
+  const elapsed = now - player.flipStart;
+  return elapsed >= IFRAME_START && elapsed <= IFRAME_END;
+}
+
+// === GATES ===
+let gates = [];
+let gateTimer = 0;
+
+// Pattern library: each pattern is array of {rail:'top'|'bot'|'both', gapFrac:0-1, delay}
+const PATTERNS = [
+  // Simple bottom gate
+  [{rail:'bot', gapFrac:0.5, delay:0}],
+  // Simple top gate
+  [{rail:'top', gapFrac:0.5, delay:0}],
+  // Double: top then bottom
+  [{rail:'top', gapFrac:0.5, delay:0},{rail:'bot', gapFrac:0.5, delay:120}],
+  // Double: bottom then top
+  [{rail:'bot', gapFrac:0.5, delay:0},{rail:'top', gapFrac:0.5, delay:120}],
+  // Narrow corridor both
+  [{rail:'both', gapFrac:0.5, delay:0}],
+  // Stagger triple
+  [{rail:'bot', gapFrac:0.4, delay:0},{rail:'top', gapFrac:0.6, delay:100},{rail:'bot', gapFrac:0.5, delay:100}],
+  // Quick double same rail
+  [{rail:'top', gapFrac:0.45, delay:0},{rail:'top', gapFrac:0.55, delay:80}],
+  [{rail:'bot', gapFrac:0.55, delay:0},{rail:'bot', gapFrac:0.45, delay:80}],
+];
+
+function spawnRoom() {
+  const diff = Math.min(dist / 8000, 1);
+  // Pick pattern; harder patterns available later
+  const maxIdx = Math.min(PATTERNS.length, 3 + Math.floor(diff * (PATTERNS.length - 3)));
+  const pat = PATTERNS[Math.floor(Math.random() * maxIdx)];
+  const gap = GAP_MAX - (GAP_MAX - GAP_MIN) * diff * 0.7;
+
+  pat.forEach((g, i) => {
+    const gateX = W + 60 + g.delay * (speed / BASE_SPEED);
+    const halfGap = gap / 2;
+    const centerY = topRail + tunnelH * g.gapFrac;
+
+    if (g.rail === 'top' || g.rail === 'both') {
+      gates.push({
+        x: gateX,
+        topY: topRail,
+        botY: centerY - halfGap,
+        isTop: true,
+        scored: false,
+        gapCenter: centerY
+      });
+    }
+    if (g.rail === 'bot' || g.rail === 'both') {
+      gates.push({
+        x: gateX,
+        topY: centerY + halfGap,
+        botY: botRail,
+        isTop: false,
+        scored: false,
+        gapCenter: centerY
+      });
+    }
+
+    // Maybe spawn sync orb
+    if (Math.random() < ORB_SPAWN_CHANCE) {
+      const orbY = g.rail === 'top' ? railY(false) : railY(true);
+      orbs.push({ x: gateX + 20, y: orbY, alive: true, pulse: Math.random() * Math.PI * 2 });
+    }
+  });
+}
+
+// === SYNC ORBS ===
+let orbs = [];
+
+// === PARTICLES ===
+const particles = [];
+for (let i = 0; i < PARTICLE_POOL; i++) {
+  particles.push({ alive: false, x:0, y:0, vx:0, vy:0, life:0, maxLife:0, hue:0, size:0 });
+}
+
+function emitParticles(x, y, count, h, spread, spd, sz) {
+  let emitted = 0;
+  for (let i = 0; i < PARTICLE_POOL && emitted < count; i++) {
+    const p = particles[i];
+    if (p.alive) continue;
+    p.alive = true;
+    p.x = x;
+    p.y = y;
+    const angle = Math.random() * Math.PI * 2;
+    const v = (0.5 + Math.random()) * spd;
+    p.vx = Math.cos(angle) * v * spread;
+    p.vy = Math.sin(angle) * v;
+    p.life = 0;
+    p.maxLife = 20 + Math.random() * 25;
+    p.hue = h + Math.random() * 30 - 15;
+    p.size = sz * (0.6 + Math.random() * 0.8);
+    emitted++;
+  }
+}
+
+function updateParticles() {
+  for (const p of particles) {
+    if (!p.alive) continue;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life++;
+    if (p.life >= p.maxLife) p.alive = false;
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    if (!p.alive) continue;
+    const t = 1 - p.life / p.maxLife;
+    ctx.globalAlpha = t * 0.8;
+    ctx.fillStyle = `hsl(${p.hue},80%,65%)`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * t, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// === COLLISION ===
+function circleRect(cx, cy, cr, rx, ry, rw, rh) {
+  const nearX = Math.max(rx, Math.min(cx, rx + rw));
+  const nearY = Math.max(ry, Math.min(cy, ry + rh));
+  const dx = cx - nearX;
+  const dy = cy - nearY;
+  return dx * dx + dy * dy < cr * cr;
+}
+
+// === SHAKE ===
+function applyShake(amt) {
+  shakeAmt = Math.max(shakeAmt, amt);
+}
+
+function updateShake() {
+  if (shakeAmt > 0.1) {
+    shakeX = (Math.random() - 0.5) * shakeAmt * 2;
+    shakeY = (Math.random() - 0.5) * shakeAmt * 2;
+    shakeAmt *= SHAKE_DECAY;
+  } else {
+    shakeX = shakeY = shakeAmt = 0;
+  }
+}
+
+// === SCORING ===
+function addScore(pts) {
+  score += Math.floor(pts * multiplier);
+}
+
+// === GAME RESET ===
+function resetGame() {
+  score = 0;
+  dist = 0;
+  combo = 0;
+  multiplier = 1;
+  speed = BASE_SPEED;
+  gates = [];
+  orbs = [];
+  gateTimer = 0;
+  shakeAmt = 0;
+  flashAlpha = 0;
+  for (const p of particles) p.alive = false;
+  resetPlayer();
+}
+
+// === INPUT ===
+function handleInput(e) {
+  if (e) e.preventDefault();
+  const now = performance.now();
+
+  if (state === STATES.START) {
+    state = STATES.PLAYING;
+    resetGame();
+    return;
+  }
+  if (state === STATES.GAMEOVER) {
+    if (now - gameoverTime > GAMEOVER_LOCK) {
+      state = STATES.PLAYING;
+      resetGame();
+    }
+    return;
+  }
+  if (state === STATES.PLAYING) {
+    flip(now);
+  }
+}
+
+canvas.addEventListener('pointerdown', handleInput);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    handleInput(null);
+  }
+});
+
+// === DRAWING HELPERS ===
+function drawTunnel() {
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, `hsl(${hue + 40},25%,8%)`);
+  grad.addColorStop(0.5, `hsl(${hue},30%,6%)`);
+  grad.addColorStop(1, `hsl(${hue - 30},25%,8%)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Rails
+  const railGlow = `hsl(${hue},60%,40%)`;
+  ctx.strokeStyle = railGlow;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = railGlow;
+  ctx.shadowBlur = 8;
+  // Top rail
+  ctx.beginPath();
+  ctx.moveTo(0, topRail);
+  ctx.lineTo(W, topRail);
+  ctx.stroke();
+  // Bottom rail
+  ctx.beginPath();
+  ctx.moveTo(0, botRail);
+  ctx.lineTo(W, botRail);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function drawGates() {
+  for (const g of gates) {
+    const gh = g.botY - g.topY;
+    if (gh <= 0) continue;
+    const gateHue = hue + 120;
+    ctx.fillStyle = `hsl(${gateHue},50%,25%)`;
+    ctx.fillRect(g.x - GATE_W / 2, g.topY, GATE_W, gh);
+    // Edge glow
+    ctx.strokeStyle = `hsl(${gateHue},70%,50%)`;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = `hsl(${gateHue},70%,50%)`;
+    ctx.shadowBlur = 6;
+    ctx.strokeRect(g.x - GATE_W / 2, g.topY, GATE_W, gh);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawOrbs(now) {
+  for (const o of orbs) {
+    if (!o.alive) continue;
+    o.pulse += 0.05;
+    const s = 1 + Math.sin(o.pulse) * 0.2;
+    const orbHue = (hue + 200) % 360;
+    ctx.shadowColor = `hsl(${orbHue},90%,60%)`;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = `hsl(${orbHue},85%,55%)`;
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, ORB_R * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner glow
+    ctx.fillStyle = `hsl(${orbHue},100%,80%)`;
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, ORB_R * s * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawPlayer(now) {
+  const px = player.x + player.burstOffset;
+  const py = player.y;
+  const inv = isInvulnerable(now);
+
+  // Trail
+  player.trail.unshift({ x: px, y: py });
+  if (player.trail.length > 12) player.trail.pop();
+  for (let i = 1; i < player.trail.length; i++) {
+    const t = 1 - i / player.trail.length;
+    ctx.globalAlpha = t * 0.3;
+    ctx.fillStyle = `hsl(${hue},70%,60%)`;
+    ctx.beginPath();
+    ctx.arc(player.trail[i].x, player.trail[i].y, PLAYER_R * t * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Main body
+  const bodyHue = inv ? (hue + 180) % 360 : hue;
+  const glow = inv ? 20 : 10;
+  ctx.shadowColor = `hsl(${bodyHue},80%,60%)`;
+  ctx.shadowBlur = glow;
+  ctx.fillStyle = `hsl(${bodyHue},75%,${inv ? 80 : 60}%)`;
+  ctx.beginPath();
+  ctx.arc(px, py, PLAYER_R, 0, Math.PI * 2);
+  ctx.fill();
+  // Core
+  ctx.fillStyle = `hsl(${bodyHue},90%,85%)`;
+  ctx.beginPath();
+  ctx.arc(px, py, PLAYER_R * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // I-frame ring
+  if (inv) {
+    ctx.strokeStyle = `hsla(${bodyHue},100%,80%,0.6)`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(px, py, PLAYER_R + 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawHUD() {
+  // Score
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${score}`, 16, 32);
+
+  // Combo/multiplier
+  if (combo > 1) {
+    ctx.font = 'bold 13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillStyle = `hsl(${hue + 60},80%,65%)`;
+    ctx.fillText(`x${multiplier.toFixed(1)} (${combo} combo)`, 16, 50);
+  }
+}
+
+function drawStartScreen() {
+  drawTunnel();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Title
+  ctx.textAlign = 'center';
+  ctx.shadowColor = `hsl(${hue},80%,60%)`;
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 36px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('GRAVITY FLIP', W / 2, H * 0.35);
+  ctx.shadowBlur = 0;
+
+  // Subtitle
+  ctx.font = '14px "Segoe UI",system-ui,sans-serif';
+  ctx.fillStyle = `hsl(${hue},60%,70%)`;
+  ctx.fillText('Beat Gates', W / 2, H * 0.35 + 30);
+
+  // Tap to start
+  const alpha = 0.5 + Math.sin(performance.now() / 500) * 0.3;
+  ctx.globalAlpha = alpha;
+  ctx.font = '16px "Segoe UI",system-ui,sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('Tap to Start', W / 2, H * 0.55);
+  ctx.globalAlpha = 1;
+
+  // Best score
+  if (best > 0) {
+    ctx.font = '13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillStyle = '#888';
+    ctx.fillText(`Best: ${best}`, W / 2, H * 0.63);
+  }
+
+  // Controls hint
+  ctx.font = '11px "Segoe UI",system-ui,sans-serif';
+  ctx.fillStyle = '#555';
+  ctx.fillText('Space / Enter / Tap to flip', W / 2, H * 0.75);
+}
+
+function drawGameoverScreen(now) {
+  drawTunnel();
+  drawGates();
+  drawOrbs(now);
+  drawParticles();
+
+  // Overlay
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Flash
+  if (flashAlpha > 0.01) {
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+    flashAlpha *= 0.9;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 28px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('GAME OVER', W / 2, H * 0.32);
+
+  ctx.font = '18px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText(`Score: ${score}`, W / 2, H * 0.44);
+
+  ctx.fillStyle = score >= best ? `hsl(50,90%,65%)` : '#aaa';
+  ctx.font = '14px "Segoe UI",system-ui,sans-serif';
+  const bestLabel = score >= best ? 'New Best!' : `Best: ${best}`;
+  ctx.fillText(bestLabel, W / 2, H * 0.52);
+
+  // Retry
+  const elapsed = now - gameoverTime;
+  if (elapsed > GAMEOVER_LOCK) {
+    const alpha = 0.5 + Math.sin(now / 500) * 0.3;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#fff';
+    ctx.font = '15px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('Tap to Retry', W / 2, H * 0.64);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// === GAME OVER ===
+function triggerGameover(now) {
+  state = STATES.GAMEOVER;
+  gameoverTime = now;
+  applyShake(SHAKE_GAMEOVER);
+  flashAlpha = 0.5;
+  emitParticles(player.x, player.y, 30, hue, 1, 3, 4);
+  if (score > best) {
+    best = score;
+    localStorage.setItem(LS_KEY, best);
+  }
+}
+
+// === MAIN LOOP ===
+let lastTime = 0;
+
+function update(now) {
+  const dt = Math.min(now - lastTime, 32);
+  lastTime = now;
+  hue = (hue + 0.15) % 360;
+
+  if (state === STATES.PLAYING) {
+    // Difficulty
+    dist += speed;
+    speed = Math.min(BASE_SPEED + dist * SPEED_RAMP, MAX_SPEED);
+
+    // Flip
+    updateFlip(now);
+    player.burstOffset *= BURST_SPRING;
+
+    // Spawn gates
+    gateTimer -= speed;
+    if (gateTimer <= 0) {
+      spawnRoom();
+      const diff = Math.min(dist / 8000, 1);
+      gateTimer = 180 - diff * 80 + Math.random() * 60;
+    }
+
+    // Move gates & orbs
+    for (const g of gates) g.x -= speed;
+    for (const o of orbs) o.x -= speed;
+
+    // Score distance
+    if (Math.floor(dist) % 8 === 0) addScore(1);
+
+    // Collision & scoring
+    const px = player.x + player.burstOffset;
+    const py = player.y;
+    const inv = isInvulnerable(now);
+
+    for (let i = gates.length - 1; i >= 0; i--) {
+      const g = gates[i];
+
+      // Off screen left
+      if (g.x + GATE_W < -10) {
+        gates.splice(i, 1);
+        continue;
+      }
+
+      // Collision check
+      const gh = g.botY - g.topY;
+      if (gh > 0 && circleRect(px, py, PLAYER_R - 1, g.x - GATE_W / 2, g.topY, GATE_W, gh)) {
+        if (inv) {
+          // Near-miss graze!
+          if (!g.scored) {
+            g.scored = true;
+            applyShake(SHAKE_NEARMISS);
+            emitParticles(px, py, 8, hue + 60, 1.5, 2, 2.5);
+            combo++;
+            multiplier = 1 + combo * 0.15;
+            addScore(15);
+          }
+        } else {
+          triggerGameover(now);
+          break;
+        }
+      }
+
+      // Perfect gate pass scoring
+      if (!g.scored && g.x + GATE_W / 2 < px - PLAYER_R) {
+        g.scored = true;
+        const distToCenter = Math.abs(py - g.gapCenter);
+        if (distToCenter < COMBO_PERFECT_DIST) {
+          combo++;
+          multiplier = 1 + combo * 0.15;
+          addScore(10);
+          emitParticles(px, py, 5, hue + 90, 0.8, 1.5, 2);
+        } else {
+          // Still passed but not perfect - keep some combo
+          addScore(3);
+          if (combo > 0) combo = Math.max(0, combo - 1);
+          multiplier = 1 + combo * 0.15;
+        }
+      }
+    }
+
+    // Orb collection
+    for (let i = orbs.length - 1; i >= 0; i--) {
+      const o = orbs[i];
+      if (!o.alive) { orbs.splice(i, 1); continue; }
+      if (o.x < -20) { orbs.splice(i, 1); continue; }
+      const dx = px - o.x;
+      const dy = py - o.y;
+      if (dx * dx + dy * dy < (PLAYER_R + ORB_R) * (PLAYER_R + ORB_R)) {
+        o.alive = false;
+        combo += 2;
+        multiplier = 1 + combo * 0.15;
+        addScore(25);
+        emitParticles(o.x, o.y, 12, (hue + 200) % 360, 1, 2.5, 3);
+      }
+    }
+
+    // Emit trail particles occasionally
+    if (Math.random() < 0.3) {
+      emitParticles(px - 5, py, 1, hue, 0.3, 0.5, 1.5);
+    }
+  }
+
+  updateParticles();
+  updateShake();
+}
+
+function draw(now) {
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+
+  if (state === STATES.START) {
+    drawStartScreen();
+  } else if (state === STATES.PLAYING) {
+    drawTunnel();
+    drawGates();
+    drawOrbs(now);
+    drawPlayer(now);
+    drawParticles();
+    drawHUD();
+  } else if (state === STATES.GAMEOVER) {
+    drawGameoverScreen(now);
+  }
+
+  ctx.restore();
+}
+
+function loop(now) {
+  update(now);
+  draw(now);
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
