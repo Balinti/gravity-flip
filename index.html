@@ -2,850 +2,527 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Gravity Flip - Free HTML5 Game</title>
 <meta name="description" content="Play Gravity Flip - Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0a0a1a">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Gravity Flip - Free HTML5 Game">
-<meta property="og:description" content="Play Gravity Flip - Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.">
+<meta property="og:description" content="Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points!">
 <meta property="og:url" content="https://balinti.github.io/gravity-flip/">
-<meta property="og:image" content="https://balinti.github.io/gravity-flip/og-image.png">
-<link rel="canonical" href="https://balinti.github.io/gravity-flip/">
+<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='315'%3E%3Crect fill='%230a0a1a' width='600' height='315'/%3E%3Ctext x='300' y='160' text-anchor='middle' fill='white' font-size='40'%3EGravity Flip%3C/text%3E%3C/svg%3E">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gravity Flip - Free HTML5 Game">
+<meta name="twitter:description" content="Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points!">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"VideoGame",
+  "name":"Gravity Flip",
+  "description":"Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.",
+  "genre":"Hyper-casual",
+  "gamePlatform":"Web Browser",
+  "applicationCategory":"Game",
+  "operatingSystem":"Any",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "url":"https://balinti.github.io/gravity-flip/"
+}
+</script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4099346100621490" crossorigin="anonymous"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#05050f;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#e0e0e0;touch-action:none;user-select:none;-webkit-user-select:none}
-#game-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;min-height:100dvh}
-#game-container{position:relative;width:100%;max-width:420px;max-height:750px;aspect-ratio:420/750;background:#0a0a1a;border-radius:8px;overflow:hidden;box-shadow:0 0 40px rgba(100,60,255,.15)}
+html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100vh;flex-direction:column}
+#frame{position:relative;width:100%;max-width:420px;max-height:750px;aspect-ratio:420/750;overflow:hidden;border-radius:8px;box-shadow:0 0 40px rgba(100,60,255,.15)}
 canvas{display:block;width:100%;height:100%}
-#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 16px;pointer-events:none;z-index:2}
-#hud-left,#hud-right{display:flex;flex-direction:column;gap:2px}
-#hud-left{align-items:flex-start}
-#hud-right{align-items:flex-end}
-.hud-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:.5}
-.hud-value{font-size:22px;font-weight:700;letter-spacing:1px;text-shadow:0 0 10px rgba(255,255,255,.3)}
-#combo-display{font-size:14px;font-weight:700;letter-spacing:1px;transition:opacity .2s}
-#polarity-indicator{display:flex;align-items:center;gap:6px;margin-top:4px}
-#polarity-dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.3);transition:background .15s}
-#polarity-text{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
-#seo-section{max-width:420px;width:100%;padding:16px 12px;text-align:center;margin-top:8px}
-#seo-section h1{font-size:14px;font-weight:600;color:#888;margin-bottom:4px}
-#seo-section p{font-size:11px;color:#555;line-height:1.5}
+#about{max-width:420px;width:100%;padding:12px 16px;margin-top:8px;color:#888;font-size:12px;line-height:1.5;text-align:center}
+#about summary{cursor:pointer;color:#aaa;font-size:13px;outline:none}
+#about p{margin-top:6px;color:#777}
 </style>
 </head>
 <body>
-<div id="game-wrap">
-<div id="game-container">
-<canvas id="c"></canvas>
-<div id="hud">
-<div id="hud-left">
-<span class="hud-label">Score</span>
-<span class="hud-value" id="score-display">0</span>
-<div id="combo-display" style="opacity:0">x1</div>
+<div id="wrap">
+  <div id="frame"><canvas id="c"></canvas></div>
+  <details id="about">
+    <summary>About / How to Play</summary>
+    <p><strong>Gravity Flip</strong> is a hyper-casual HTML5 game. Tap or press Space/Enter to flip gravity and switch your polarity. Your orb is either white or black &mdash; pass through gates of the <em>opposite</em> color to survive. If your color matches the gate, you die! Dodge spikes, collect Combo Sparks for bonus points and score multipliers, and see how far you can go as the speed ramps up. Works on desktop and mobile.</p>
+  </details>
 </div>
-<div id="hud-right">
-<span class="hud-label">Best</span>
-<span class="hud-value" id="best-display">0</span>
-<div id="polarity-indicator">
-<div id="polarity-dot"></div>
-<span id="polarity-text">LIGHT</span>
-</div>
-</div>
-</div>
-</div>
-<div id="seo-section">
-<h1>Gravity Flip - Free Browser Game</h1>
-<p>Tap or press Space to flip between ceiling and floor. Match the right polarity to pass through gates. Collect combo sparks to boost your multiplier. How far can you go?</p>
-</div>
-</div>
-
 <script>
-'use strict';
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const container = document.getElementById('game-container');
-const scoreEl = document.getElementById('score-display');
-const bestEl = document.getElementById('best-display');
-const comboEl = document.getElementById('combo-display');
-const polarityDot = document.getElementById('polarity-dot');
-const polarityText = document.getElementById('polarity-text');
+(function(){
+"use strict";
 
-// --- Constants ---
-const W = 420, H = 750;
-const WALL_T = 18;
-const PLAYER_R = 14;
-const FLOOR_Y = H - WALL_T - PLAYER_R - 2;
-const CEIL_Y = WALL_T + PLAYER_R + 2;
-const PLAYER_X = 80;
-const FLIP_DURATION = 0.12;
-const GRAZE_DIST = 8;
+const cvs=document.getElementById('c');
+const ctx=cvs.getContext('2d');
+const frame=document.getElementById('frame');
+const DPR=Math.min(window.devicePixelRatio||1,3);
+let W=420,H=750;
 
-const LIGHT_COL = '#f0e6ff';
-const DARK_COL = '#1a0a30';
-const LIGHT_GATE = 'rgba(240,230,255,0.85)';
-const DARK_GATE = 'rgba(26,10,48,0.85)';
-const SPIKE_COL = '#ff3366';
-const SPARK_COL = '#ffdd44';
-
-// --- State ---
-let state = 'start';
-let dpr = 1;
-let score = 0;
-let bestScore = parseInt(localStorage.getItem('gf_best')) || 0;
-let bestCombo = parseInt(localStorage.getItem('gf_bestcombo')) || 0;
-let combo = 1;
-let comboTimer = 0;
-const COMBO_DECAY_TIME = 2.5;
-let polarity = 0; // 0=light, 1=dark
-let playerY = FLOOR_Y;
-let targetY = FLOOR_Y;
-let flipT = 0;
-let flipFrom = FLOOR_Y;
-let isFlipping = false;
-let onFloor = true;
-let gameSpeed = 1;
-let baseSpeed = 3.2;
-let distanceTraveled = 0;
-let difficultyLevel = 0;
-
-let obstacles = [];
-let sparksList = [];
-let particles = [];
-let bgParticles = [];
-let shakeX = 0, shakeY = 0, shakeMag = 0, shakeDecay = 0;
-let hitStopTimer = 0;
-let comboHue = 220;
-let lastTime = 0;
-let frameCount = 0;
-
-// --- Resize ---
-function resize() {
-    const rect = container.getBoundingClientRect();
-    dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    ctx.setTransform(dpr * rect.width / W, 0, 0, dpr * rect.height / H, 0, 0);
+function resize(){
+  const fr=frame.getBoundingClientRect();
+  W=fr.width;H=fr.height;
+  cvs.style.width=W+'px';
+  cvs.style.height=H+'px';
+  cvs.width=Math.round(W*DPR);
+  cvs.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
 }
-window.addEventListener('resize', resize);
+window.addEventListener('resize',resize);
 resize();
 
-// --- Utility ---
-function lerp(a, b, t) { return a + (b - a) * t; }
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-function rnd(a, b) { return a + Math.random() * (b - a); }
-function rndInt(a, b) { return Math.floor(rnd(a, b + 1)); }
-function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+const RAIL_TOP=50;
+const RAIL_BOT_OFF=50;
+const PX=80;
+const PR=12;
+const SPIKE_W=28,SPIKE_H=32;
+const GATE_W=18;
+const SPARK_R=9;
+const BASE_SPEED=160;
+const MAX_SPEED=420;
+const SPEED_RAMP=0.45;
+const SPRING_K=16;
+const SPRING_DAMP=8;
+const MAX_PARTS=200;
+const SLOWMO_SCALE=0.70;
+const SLOWMO_DUR=0.7;
+const DEATH_FREEZE_DUR=0.1;
 
-function hsl(h, s, l, a) {
-    if (a !== undefined) return `hsla(${h|0},${s|0}%,${l|0}%,${a})`;
-    return `hsl(${h|0},${s|0}%,${l|0}%)`;
+let state='start';
+let score=0,best=parseInt(localStorage.getItem('gf_best'))||0;
+let multiplier=1,conSparks=0,distAcc=0,difficulty=0;
+let timeScale=1,slowmoTimer=0,freezeTimer=0;
+let deathCause='';
+let shakeX=0,shakeY=0,shakeMag=0,shakeTimer=0,shakeDur=0;
+let hueShift=0,gameTime=0;
+
+let py=0,pvy=0,pgrav=1,ppol=0;
+
+function rBot(){return H-RAIL_BOT_OFF;}
+function targY(){return pgrav===1?rBot()-PR:RAIL_TOP+PR;}
+
+function resetPlayer(){pgrav=1;ppol=0;py=targY();pvy=0;}
+
+let obs=[],sparks=[],telegraphs=[],particles=[];
+let spawnX=0;
+
+function gSpeed(){return Math.min(BASE_SPEED+difficulty*SPEED_RAMP,MAX_SPEED);}
+
+function spawnChunk(){
+  const speed=gSpeed();
+  const minGap=Math.max(70,130-difficulty*0.25);
+  const chunkPx=(2+Math.random()*2.5)*speed;
+  const df=Math.min(difficulty/250,1);
+  let cx=0;
+
+  while(cx<chunkPx){
+    const roll=Math.random();
+    const ox=spawnX+cx;
+
+    if(roll<0.32){
+      const side=Math.random()<0.5?'f':'c';
+      const oy=side==='f'?rBot():RAIL_TOP;
+      obs.push({t:'s',x:ox,y:oy,s:side,w:SPIKE_W,h:SPIKE_H});
+      addTele(ox,oy,side);
+      cx+=minGap+Math.random()*40;
+    }else if(roll<0.32+0.35*(0.4+0.6*df)){
+      const gp=Math.random()<0.5?0:1;
+      const side=Math.random()<0.5?'f':'c';
+      const oy=side==='f'?rBot():RAIL_TOP;
+      const gh=48+Math.random()*32;
+      obs.push({t:'g',x:ox,y:oy,s:side,p:gp,w:GATE_W,h:gh});
+      addTele(ox,oy,side);
+      cx+=minGap+25+Math.random()*30;
+    }else{
+      const sy=RAIL_TOP+40+Math.random()*(rBot()-RAIL_TOP-80);
+      sparks.push({x:ox,y:sy,r:SPARK_R,a:true});
+      cx+=minGap*0.55;
+    }
+
+    if(df>0.35&&Math.random()<df*0.28){
+      const s2=Math.random()<0.5?'f':'c';
+      const ox2=spawnX+cx;
+      const oy2=s2==='f'?rBot():RAIL_TOP;
+      obs.push({t:'s',x:ox2,y:oy2,s:s2,w:SPIKE_W,h:SPIKE_H});
+      addTele(ox2,oy2,s2);
+      cx+=minGap*0.45;
+    }
+  }
+  spawnX+=chunkPx;
 }
 
-// --- Particles ---
-function spawnFlipBurst(x, y, pol) {
-    const col = pol === 0 ? LIGHT_COL : '#6030cc';
-    for (let i = 0; i < 12; i++) {
-        const angle = (Math.PI * 2 / 12) * i + rnd(-0.2, 0.2);
-        const spd = rnd(1.5, 4);
-        particles.push({
-            x, y,
-            vx: Math.cos(angle) * spd,
-            vy: Math.sin(angle) * spd,
-            life: 1, decay: rnd(1.5, 2.5),
-            r: rnd(2, 4),
-            col
-        });
-    }
+function addTele(x,y,side){
+  telegraphs.push({x:x,y:y,s:side,a:0.12});
 }
 
-function spawnGatePing(x, y, w, h, pol) {
-    const col = pol === 0 ? '#aa88ff' : '#ffaa44';
-    for (let i = 0; i < 8; i++) {
-        particles.push({
-            x: x + rnd(0, w), y: y + rnd(0, h),
-            vx: rnd(-2, 2), vy: rnd(-2, 2),
-            life: 1, decay: rnd(1.8, 2.8),
-            r: rnd(2, 5),
-            col
-        });
-    }
-    // Ripple
-    particles.push({
-        x: x + w / 2, y: y + h / 2,
-        vx: 0, vy: 0,
-        life: 1, decay: 1.2,
-        r: 5, maxR: 50,
-        col, isRipple: true
-    });
+function emit(x,y,n,hue,spd){
+  for(let i=0;i<n&&particles.length<MAX_PARTS;i++){
+    const a=Math.random()*Math.PI*2;
+    const v=(0.5+Math.random())*spd;
+    particles.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,
+      life:0.35+Math.random()*0.5,ml:0.35+Math.random()*0.5,
+      r:2+Math.random()*3,hue:hue+Math.random()*40-20});
+  }
 }
 
-function spawnDeathShatter(x, y) {
-    for (let i = 0; i < 30; i++) {
-        const angle = rnd(0, Math.PI * 2);
-        const spd = rnd(2, 8);
-        particles.push({
-            x, y,
-            vx: Math.cos(angle) * spd,
-            vy: Math.sin(angle) * spd,
-            life: 1, decay: rnd(0.6, 1.5),
-            r: rnd(2, 6),
-            col: [SPIKE_COL, '#ff6699', '#ffaacc', '#ffffff'][rndInt(0, 3)]
-        });
-    }
+function shake(mag,dur){shakeMag=mag;shakeDur=dur;shakeTimer=dur;}
+
+function handleInput(){
+  if(state==='start'){startGame();}
+  else if(state==='playing'){flip();}
+  else if(state==='gameover'&&freezeTimer<=0){state='start';}
 }
 
-function spawnSparkCollect(x, y) {
-    for (let i = 0; i < 6; i++) {
-        const angle = rnd(0, Math.PI * 2);
-        const spd = rnd(1, 3);
-        particles.push({
-            x, y,
-            vx: Math.cos(angle) * spd,
-            vy: Math.sin(angle) * spd,
-            life: 1, decay: rnd(1.5, 2.5),
-            r: rnd(2, 4),
-            col: SPARK_COL
-        });
-    }
+document.addEventListener('pointerdown',function(e){e.preventDefault();handleInput();});
+document.addEventListener('keydown',function(e){
+  if(e.code==='Space'||e.code==='Enter'){e.preventDefault();handleInput();}
+});
+
+function flip(){
+  pgrav*=-1;
+  ppol=ppol===0?1:0;
+  emit(PX,py,8,ppol===0?60:260,80);
+  shake(2,0.1);
 }
 
-// --- Background particles ---
-function initBgParticles() {
-    bgParticles = [];
-    for (let i = 0; i < 30; i++) {
-        bgParticles.push({
-            x: rnd(0, W), y: rnd(0, H),
-            r: rnd(0.5, 2),
-            speed: rnd(0.2, 0.8),
-            alpha: rnd(0.05, 0.2)
-        });
-    }
-}
-initBgParticles();
-
-// --- Obstacle Spawning ---
-function getMinGap() {
-    return Math.max(160, 280 - difficultyLevel * 10);
+function startGame(){
+  state='playing';score=0;multiplier=1;conSparks=0;distAcc=0;difficulty=0;
+  timeScale=1;slowmoTimer=0;freezeTimer=0;gameTime=0;
+  obs=[];sparks=[];telegraphs=[];particles=[];deathCause='';
+  resetPlayer();
+  spawnX=W+100;
+  spawnChunk();spawnChunk();
 }
 
-function getObstacleSpeed() {
-    return baseSpeed * gameSpeed;
+function die(cause){
+  state='gameover';deathCause=cause;freezeTimer=DEATH_FREEZE_DUR;
+  if(score>best){best=score;localStorage.setItem('gf_best',best);}
+  emit(PX,py,45,ppol===0?0:270,220);
+  shake(14,0.45);
 }
 
-let lastSpawnX = W + 200;
-
-function spawnObstacle() {
-    const spd = getObstacleSpeed();
-    const minGap = getMinGap();
-
-    // Check buffer distance from last obstacle
-    if (obstacles.length > 0) {
-        let maxX = 0;
-        for (const o of obstacles) {
-            if (o.x + o.w > maxX) maxX = o.x + o.w;
-        }
-        for (const s of sparksList) {
-            if (s.x + s.r > maxX) maxX = s.x + s.r;
-        }
-        if (maxX + minGap > W + 10) return;
-    }
-
-    const roll = Math.random();
-    const dl = difficultyLevel;
-
-    if (roll < 0.30) {
-        // Single spike
-        const onF = Math.random() < 0.5;
-        obstacles.push({
-            type: 'spike',
-            x: W + 20,
-            y: onF ? H - WALL_T - 30 : WALL_T,
-            w: 22, h: 30,
-            onFloor: onF,
-            speed: spd,
-            grazed: false
-        });
-    } else if (roll < 0.45 && dl >= 2) {
-        // Staggered dual spikes (floor then ceiling, offset to be solvable)
-        obstacles.push({
-            type: 'spike', x: W + 20,
-            y: H - WALL_T - 30, w: 22, h: 30,
-            onFloor: true, speed: spd, grazed: false
-        });
-        // Offset the ceiling spike so player has time to flip
-        const offset = Math.max(80, 140 - dl * 5);
-        obstacles.push({
-            type: 'spike', x: W + 20 + offset,
-            y: WALL_T, w: 22, h: 30,
-            onFloor: false, speed: spd, grazed: false
-        });
-    } else if (roll < 0.75) {
-        // Gate (polarity-locked)
-        const gPol = Math.random() < 0.5 ? 0 : 1;
-        const onF = Math.random() < 0.5;
-        const gH = 55;
-        const gY = onF ? H - WALL_T - gH : WALL_T;
-        obstacles.push({
-            type: 'gate',
-            x: W + 20,
-            y: gY,
-            w: 30, h: gH,
-            polarity: gPol,
-            onFloor: onF,
-            speed: spd,
-            scored: false
-        });
-    } else {
-        // Combo Spark collectible
-        const sy = rnd(CEIL_Y + 30, FLOOR_Y - 30);
-        sparksList.push({
-            x: W + 20, y: sy,
-            r: 8,
-            speed: spd,
-            alive: true,
-            pulse: 0
-        });
-    }
+function circRect(cx,cy,cr,rx,ry,rw,rh){
+  const nx=Math.max(rx,Math.min(cx,rx+rw));
+  const ny=Math.max(ry,Math.min(cy,ry+rh));
+  const dx=cx-nx,dy=cy-ny;
+  return dx*dx+dy*dy<cr*cr;
 }
 
-// --- Collision ---
-function circleAABB(cx, cy, cr, rx, ry, rw, rh) {
-    const nearX = clamp(cx, rx, rx + rw);
-    const nearY = clamp(cy, ry, ry + rh);
-    const dx = cx - nearX;
-    const dy = cy - nearY;
-    return dx * dx + dy * dy < cr * cr;
+function checkColl(){
+  for(let i=obs.length-1;i>=0;i--){
+    const o=obs[i];
+    if(o.x+o.w<PX-PR-20||o.x>PX+PR+20)continue;
+    if(o.t==='s'){
+      let sx=o.x-o.w/2,sy=o.s==='f'?o.y-o.h:o.y;
+      if(circRect(PX,py,PR,sx,sy,o.w,o.h)){die('Spiked!');return;}
+    }else if(o.t==='g'){
+      let gx=o.x-o.w/2,gy=o.s==='f'?o.y-o.h:o.y;
+      if(circRect(PX,py,PR,gx,gy,o.w,o.h)){
+        if(ppol===o.p){die('Wrong polarity!');return;}
+      }
+    }
+  }
+  for(let i=sparks.length-1;i>=0;i--){
+    const s=sparks[i];
+    if(!s.a)continue;
+    const dx=PX-s.x,dy=py-s.y;
+    if(dx*dx+dy*dy<(PR+s.r)*(PR+s.r)){
+      s.a=false;conSparks++;
+      multiplier=Math.min(8,1+Math.floor(conSparks/2));
+      score+=10*multiplier;
+      slowmoTimer=SLOWMO_DUR;timeScale=SLOWMO_SCALE;
+      emit(s.x,s.y,16,50,130);
+      shake(3,0.12);
+    }
+  }
+  if(py-PR<RAIL_TOP){py=RAIL_TOP+PR;pvy=0;}
+  if(py+PR>rBot()){py=rBot()-PR;pvy=0;}
 }
 
-// --- Game Logic ---
-function resetGame() {
-    state = 'playing';
-    score = 0;
-    combo = 1;
-    comboTimer = COMBO_DECAY_TIME;
-    polarity = 0;
-    playerY = FLOOR_Y;
-    targetY = FLOOR_Y;
-    flipT = 0;
-    isFlipping = false;
-    onFloor = true;
-    gameSpeed = 1;
-    distanceTraveled = 0;
-    difficultyLevel = 0;
-    obstacles = [];
-    sparksList = [];
-    particles = [];
-    shakeMag = 0;
-    hitStopTimer = 0;
-    comboHue = 220;
-    spawnCd = 0.5;
-    updateHUD();
+let lastT=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!lastT){lastT=ts;return;}
+  let rawDt=(ts-lastT)/1000;
+  lastT=ts;
+  rawDt=Math.min(rawDt,1/30);
+  hueShift+=rawDt*22;
+
+  if(freezeTimer>0){
+    freezeTimer-=rawDt;
+    updParts(rawDt);updShake(rawDt);
+    draw();return;
+  }
+
+  if(slowmoTimer>0){slowmoTimer-=rawDt;if(slowmoTimer<=0)timeScale=1;}
+  const dt=rawDt*timeScale;
+
+  if(state==='playing'){
+    gameTime+=dt;difficulty+=dt;
+    const speed=gSpeed();
+    distAcc+=speed*dt;
+    while(distAcc>=40){distAcc-=40;score+=1;}
+
+    const ty=targY();
+    const disp=ty-py;
+    const springF=disp*SPRING_K;
+    pvy+=springF*dt*60;
+    pvy*=Math.max(0,1-SPRING_DAMP*dt*60);
+    py+=pvy*dt*60;
+
+    for(let i=0;i<obs.length;i++)obs[i].x-=speed*dt;
+    for(let i=0;i<sparks.length;i++)sparks[i].x-=speed*dt;
+    for(let i=0;i<telegraphs.length;i++)telegraphs[i].x-=speed*dt;
+
+    obs=obs.filter(o=>o.x>-60);
+    sparks=sparks.filter(s=>s.x>-30&&s.a);
+    telegraphs=telegraphs.filter(t=>t.x>-60);
+
+    let furthest=0;
+    for(let i=0;i<obs.length;i++)if(obs[i].x>furthest)furthest=obs[i].x;
+    if(furthest<W+300)spawnChunk();
+
+    checkColl();
+  }
+
+  updParts(rawDt);updShake(rawDt);
+  draw();
 }
 
-function doFlip() {
-    if (isFlipping) return;
-    onFloor = !onFloor;
-    polarity = 1 - polarity;
-    targetY = onFloor ? FLOOR_Y : CEIL_Y;
-    flipFrom = playerY;
-    flipT = 0;
-    isFlipping = true;
-    spawnFlipBurst(PLAYER_X, playerY, polarity);
+function updParts(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vx*=(1-3*dt);p.vy*=(1-3*dt);
+    p.vy+=50*dt;p.life-=dt;
+    if(p.life<=0)particles.splice(i,1);
+  }
 }
 
-function addScore(pts) {
-    score += Math.round(pts * combo);
-    comboTimer = COMBO_DECAY_TIME;
-    updateHUD();
+function updShake(dt){
+  if(shakeTimer>0){
+    shakeTimer-=dt;
+    const e=Math.max(0,shakeTimer/shakeDur);
+    shakeX=(Math.random()-0.5)*2*shakeMag*e;
+    shakeY=(Math.random()-0.5)*2*shakeMag*e;
+  }else{shakeX=0;shakeY=0;}
 }
 
-function boostCombo() {
-    combo = Math.min(combo + 0.5, 10);
-    comboTimer = COMBO_DECAY_TIME;
-    updateHUD();
+function draw(){
+  ctx.save();
+  ctx.translate(shakeX,shakeY);
+
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a0a1a');
+  bg.addColorStop(0.5,'#0d0d2b');
+  bg.addColorStop(1,'#0a0a1a');
+  ctx.fillStyle=bg;
+  ctx.fillRect(-20,-20,W+40,H+40);
+
+  const rh=(hueShift%360)|0;
+  ctx.fillStyle=`hsla(${rh},60%,30%,0.25)`;
+  ctx.fillRect(0,0,W,RAIL_TOP);
+  ctx.fillRect(0,rBot(),W,H-rBot());
+  ctx.strokeStyle=`hsla(${rh},70%,50%,0.45)`;
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,RAIL_TOP);ctx.lineTo(W,RAIL_TOP);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,rBot());ctx.lineTo(W,rBot());ctx.stroke();
+
+  if(state==='playing'||state==='gameover'){
+    drawTele();drawObs();drawSparks();drawPlayer();drawParts();drawUI();
+  }
+  if(state==='start')drawStart();
+  if(state==='gameover')drawGO();
+  ctx.restore();
 }
 
-function triggerGraze() {
-    hitStopTimer = 0.04;
-    shakeMag = 3;
-    shakeDecay = 8;
-    addScore(5);
-    boostCombo();
-}
-
-function die() {
-    state = 'gameover';
-    spawnDeathShatter(PLAYER_X, playerY);
-    shakeMag = 12;
-    shakeDecay = 3;
-    if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('gf_best', bestScore);
+function drawTele(){
+  for(const t of telegraphs){
+    if(t.x<-40||t.x>W+100)continue;
+    ctx.save();ctx.globalAlpha=t.a;
+    ctx.fillStyle='#ff4466';
+    for(let i=0;i<3;i++){
+      const sx=t.x-9+i*12;
+      if(t.s==='f')ctx.fillRect(sx,rBot()-38,6,38);
+      else ctx.fillRect(sx,RAIL_TOP,6,38);
     }
-    if (combo > bestCombo) {
-        bestCombo = Math.floor(combo);
-        localStorage.setItem('gf_bestcombo', bestCombo);
-    }
-    updateHUD();
-}
-
-function updateHUD() {
-    scoreEl.textContent = score;
-    bestEl.textContent = bestScore;
-    if (combo > 1) {
-        comboEl.style.opacity = '1';
-        comboEl.textContent = 'x' + combo.toFixed(1);
-        comboEl.style.color = hsl(comboHue, 80, 65);
-    } else {
-        comboEl.style.opacity = '0';
-    }
-    const pol = polarity === 0;
-    polarityDot.style.background = pol ? LIGHT_COL : '#6030cc';
-    polarityText.textContent = pol ? 'LIGHT' : 'DARK';
-    polarityText.style.color = pol ? LIGHT_COL : '#a070ff';
-}
-
-// --- Spawn timer ---
-let spawnCd = 0;
-
-function update(dt) {
-    if (hitStopTimer > 0) {
-        hitStopTimer -= dt;
-        return;
-    }
-
-    frameCount++;
-    distanceTraveled += getObstacleSpeed() * dt * 60;
-    difficultyLevel = Math.floor(distanceTraveled / 2000);
-    gameSpeed = 1 + difficultyLevel * 0.06;
-
-    // Flip animation
-    if (isFlipping) {
-        flipT += dt / FLIP_DURATION;
-        if (flipT >= 1) {
-            flipT = 1;
-            isFlipping = false;
-        }
-        playerY = lerp(flipFrom, targetY, easeInOutCubic(flipT));
-    }
-
-    // Combo decay
-    comboTimer -= dt;
-    if (comboTimer <= 0) {
-        combo = Math.max(1, combo - dt * 1.5);
-        if (combo <= 1) combo = 1;
-        updateHUD();
-    }
-
-    // Combo hue shift
-    comboHue = 220 + (combo - 1) * 15;
-
-    // Spawn
-    spawnCd -= dt;
-    if (spawnCd <= 0) {
-        spawnObstacle();
-        spawnCd = rnd(0.35, 0.8) / gameSpeed;
-    }
-
-    // Distance score (1 point per ~6 frames)
-    if (frameCount % 6 === 0) addScore(1);
-
-    // Update obstacles
-    const spd = getObstacleSpeed();
-    let grazed = false;
-    for (let i = obstacles.length - 1; i >= 0; i--) {
-        const o = obstacles[i];
-        o.x -= spd * dt * 60;
-        if (o.x + o.w < -30) {
-            obstacles.splice(i, 1);
-            continue;
-        }
-        // Collision
-        if (o.type === 'spike') {
-            if (circleAABB(PLAYER_X, playerY, PLAYER_R - 2, o.x, o.y, o.w, o.h)) {
-                die(); return;
-            }
-            // Graze detection
-            if (!grazed && !o.grazed && circleAABB(PLAYER_X, playerY, PLAYER_R + GRAZE_DIST, o.x, o.y, o.w, o.h)) {
-                o.grazed = true;
-                triggerGraze();
-                grazed = true;
-            }
-        } else if (o.type === 'gate') {
-            if (circleAABB(PLAYER_X, playerY, PLAYER_R - 2, o.x, o.y, o.w, o.h)) {
-                if (polarity === o.polarity) {
-                    die(); return;
-                } else if (!o.scored) {
-                    o.scored = true;
-                    addScore(15);
-                    boostCombo();
-                    spawnGatePing(o.x, o.y, o.w, o.h, o.polarity);
-                }
-            }
-        }
-    }
-
-    // Update sparks
-    for (let i = sparksList.length - 1; i >= 0; i--) {
-        const s = sparksList[i];
-        s.x -= spd * dt * 60;
-        s.pulse += dt * 4;
-        if (s.x < -20) {
-            sparksList.splice(i, 1);
-            continue;
-        }
-        if (s.alive) {
-            const dx = PLAYER_X - s.x;
-            const dy = playerY - s.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < PLAYER_R + s.r) {
-                s.alive = false;
-                addScore(10);
-                boostCombo();
-                spawnSparkCollect(s.x, s.y);
-                sparksList.splice(i, 1);
-            }
-        }
-    }
-
-    // Update particles
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= p.decay * dt;
-        if (p.life <= 0) {
-            particles.splice(i, 1);
-            continue;
-        }
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.96;
-        p.vy *= 0.96;
-        if (p.isRipple) {
-            p.r = lerp(5, p.maxR, 1 - p.life);
-        }
-    }
-
-    // Update bg particles
-    for (const bp of bgParticles) {
-        bp.x -= bp.speed * gameSpeed;
-        if (bp.x < -5) { bp.x = W + 5; bp.y = rnd(0, H); }
-    }
-
-    // Screen shake decay
-    if (shakeMag > 0) {
-        shakeMag *= Math.pow(0.5, dt * shakeDecay);
-        shakeX = rnd(-shakeMag, shakeMag);
-        shakeY = rnd(-shakeMag, shakeMag);
-        if (shakeMag < 0.3) { shakeMag = 0; shakeX = 0; shakeY = 0; }
-    }
-}
-
-// --- Draw ---
-function draw() {
-    ctx.save();
-    ctx.translate(shakeX, shakeY);
-
-    // Background with combo hue shift
-    const bgHue = lerp(220, comboHue, clamp((combo - 1) / 6, 0, 1));
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, hsl(bgHue, 30, 6));
-    grad.addColorStop(0.5, hsl(bgHue + 10, 25, 4));
-    grad.addColorStop(1, hsl(bgHue + 20, 35, 8));
-    ctx.fillStyle = grad;
-    ctx.fillRect(-20, -20, W + 40, H + 40);
-
-    // Bg particles (stars)
-    for (const bp of bgParticles) {
-        ctx.globalAlpha = bp.alpha;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(bp.x, bp.y, bp.r, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // Walls
-    const wallGrad = ctx.createLinearGradient(0, 0, W, 0);
-    wallGrad.addColorStop(0, hsl(bgHue + 30, 40, 20));
-    wallGrad.addColorStop(1, hsl(bgHue + 50, 50, 25));
-    ctx.fillStyle = wallGrad;
-    ctx.fillRect(0, 0, W, WALL_T);
-    ctx.fillRect(0, H - WALL_T, W, WALL_T);
-
-    // Wall accent lines
-    ctx.strokeStyle = hsl(bgHue + 40, 60, 40, 0.4);
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, WALL_T); ctx.lineTo(W, WALL_T);
-    ctx.moveTo(0, H - WALL_T); ctx.lineTo(W, H - WALL_T);
-    ctx.stroke();
-
-    // Obstacles
-    for (const o of obstacles) {
-        if (o.type === 'spike') {
-            drawSpike(o);
-        } else if (o.type === 'gate') {
-            drawGate(o);
-        }
-    }
-
-    // Sparks
-    for (const s of sparksList) {
-        if (!s.alive) continue;
-        const pr = s.r + Math.sin(s.pulse) * 2;
-        ctx.save();
-        ctx.shadowColor = SPARK_COL;
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = SPARK_COL;
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            const a = (Math.PI * 2 / 5) * i - Math.PI / 2;
-            const a2 = a + Math.PI / 5;
-            const ox = s.x + Math.cos(a) * pr;
-            const oy = s.y + Math.sin(a) * pr;
-            const ix = s.x + Math.cos(a2) * pr * 0.45;
-            const iy = s.y + Math.sin(a2) * pr * 0.45;
-            if (i === 0) ctx.moveTo(ox, oy);
-            else ctx.lineTo(ox, oy);
-            ctx.lineTo(ix, iy);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-    }
-
-    // Player
-    drawPlayer();
-
-    // Particles
-    for (const p of particles) {
-        if (p.isRipple) {
-            ctx.strokeStyle = p.col;
-            ctx.globalAlpha = p.life * 0.5;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-        } else {
-            ctx.globalAlpha = p.life;
-            ctx.fillStyle = p.col;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-    }
-
-    // Overlays
-    if (state === 'start') drawStartScreen();
-    else if (state === 'gameover') drawGameOver();
-
     ctx.restore();
+  }
 }
 
-function drawSpike(o) {
-    ctx.fillStyle = SPIKE_COL;
-    ctx.save();
-    ctx.shadowColor = SPIKE_COL;
-    ctx.shadowBlur = 8;
+function drawObs(){
+  for(const o of obs){
+    if(o.x<-60||o.x>W+60)continue;
+    if(o.t==='s'){
+      ctx.fillStyle=`hsl(${((hueShift+180)%360)|0},80%,55%)`;
+      ctx.beginPath();
+      if(o.s==='f'){
+        ctx.moveTo(o.x,o.y-o.h);
+        ctx.lineTo(o.x-o.w/2,o.y);
+        ctx.lineTo(o.x+o.w/2,o.y);
+      }else{
+        ctx.moveTo(o.x,o.y+o.h);
+        ctx.lineTo(o.x-o.w/2,o.y);
+        ctx.lineTo(o.x+o.w/2,o.y);
+      }
+      ctx.closePath();ctx.fill();
+      ctx.save();ctx.shadowColor=`hsl(${((hueShift+180)%360)|0},90%,60%)`;
+      ctx.shadowBlur=8;ctx.fill();ctx.restore();
+    }else if(o.t==='g'){
+      const isW=o.p===0;
+      ctx.fillStyle=isW?'rgba(255,255,255,0.92)':'rgba(20,20,35,0.95)';
+      ctx.strokeStyle=isW?'rgba(255,255,255,0.8)':'rgba(100,70,200,0.7)';
+      ctx.lineWidth=2;
+      const gx=o.x-o.w/2;
+      const gy=o.s==='f'?o.y-o.h:o.y;
+      ctx.fillRect(gx,gy,o.w,o.h);
+      ctx.strokeRect(gx,gy,o.w,o.h);
+      ctx.fillStyle=isW?'#111':'#eee';
+      ctx.font='bold 10px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(isW?'W':'B',o.x,gy+o.h/2);
+      ctx.save();
+      ctx.shadowColor=isW?'rgba(255,255,255,0.35)':'rgba(100,50,255,0.4)';
+      ctx.shadowBlur=10;ctx.strokeRect(gx,gy,o.w,o.h);
+      ctx.restore();
+    }
+  }
+  ctx.textBaseline='alphabetic';
+}
+
+function drawSparks(){
+  for(const s of sparks){
+    if(!s.a||s.x<-20||s.x>W+20)continue;
+    const pulse=1+0.15*Math.sin(gameTime*8);
+    const r=s.r*pulse;
+    ctx.beginPath();ctx.arc(s.x,s.y,r+4,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${((hueShift+50)%360)|0},100%,70%,0.22)`;ctx.fill();
     ctx.beginPath();
-    if (o.onFloor) {
-        ctx.moveTo(o.x, o.y + o.h);
-        ctx.lineTo(o.x + o.w / 2, o.y);
-        ctx.lineTo(o.x + o.w, o.y + o.h);
-    } else {
-        ctx.moveTo(o.x, o.y);
-        ctx.lineTo(o.x + o.w / 2, o.y + o.h);
-        ctx.lineTo(o.x + o.w, o.y);
+    for(let i=0;i<5;i++){
+      const a=-Math.PI/2+(i*2*Math.PI/5);
+      const ai=a+Math.PI/5;
+      ctx.lineTo(s.x+Math.cos(a)*r,s.y+Math.sin(a)*r);
+      ctx.lineTo(s.x+Math.cos(ai)*r*0.45,s.y+Math.sin(ai)*r*0.45);
     }
     ctx.closePath();
+    ctx.fillStyle=`hsl(${((hueShift+50)%360)|0},100%,75%)`;
     ctx.fill();
-    ctx.restore();
+    ctx.save();ctx.shadowColor=`hsl(${((hueShift+50)%360)|0},100%,80%)`;
+    ctx.shadowBlur=12;ctx.fill();ctx.restore();
+  }
 }
 
-function drawGate(o) {
-    const isLight = o.polarity === 0;
-    ctx.save();
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = isLight ? LIGHT_GATE : DARK_GATE;
-    ctx.strokeStyle = isLight ? '#d0c0ff' : '#4020aa';
-    ctx.lineWidth = 2;
-    const r = 4;
-    ctx.beginPath();
-    ctx.moveTo(o.x + r, o.y);
-    ctx.lineTo(o.x + o.w - r, o.y);
-    ctx.quadraticCurveTo(o.x + o.w, o.y, o.x + o.w, o.y + r);
-    ctx.lineTo(o.x + o.w, o.y + o.h - r);
-    ctx.quadraticCurveTo(o.x + o.w, o.y + o.h, o.x + o.w - r, o.y + o.h);
-    ctx.lineTo(o.x + r, o.y + o.h);
-    ctx.quadraticCurveTo(o.x, o.y + o.h, o.x, o.y + o.h - r);
-    ctx.lineTo(o.x, o.y + r);
-    ctx.quadraticCurveTo(o.x, o.y, o.x + r, o.y);
-    ctx.closePath();
+function drawPlayer(){
+  ctx.beginPath();ctx.arc(PX-6,py,PR*0.7,0,Math.PI*2);
+  ctx.fillStyle=ppol===0?'rgba(255,255,255,0.08)':'rgba(80,50,180,0.12)';
+  ctx.fill();
+
+  ctx.beginPath();ctx.arc(PX,py,PR+4,0,Math.PI*2);
+  ctx.fillStyle=ppol===0?'rgba(255,255,255,0.12)':'rgba(100,60,255,0.18)';
+  ctx.fill();
+
+  ctx.beginPath();ctx.arc(PX,py,PR,0,Math.PI*2);
+  ctx.save();
+  if(ppol===0){ctx.fillStyle='#fff';ctx.shadowColor='#fff';}
+  else{ctx.fillStyle='#1a1a2e';ctx.shadowColor='#6633ff';}
+  ctx.shadowBlur=15;ctx.fill();ctx.restore();
+  ctx.strokeStyle=ppol===0?'rgba(200,200,255,0.8)':'rgba(130,80,255,0.9)';
+  ctx.lineWidth=2;ctx.stroke();
+
+  ctx.beginPath();ctx.arc(PX,py,PR*0.35,0,Math.PI*2);
+  ctx.fillStyle=ppol===0?'rgba(200,220,255,0.5)':'rgba(130,80,255,0.6)';
+  ctx.fill();
+
+  ctx.beginPath();
+  const ay=py+pgrav*(PR+8);
+  ctx.moveTo(PX-5,ay-pgrav*4);ctx.lineTo(PX,ay);ctx.lineTo(PX+5,ay-pgrav*4);
+  ctx.strokeStyle=ppol===0?'rgba(255,255,255,0.45)':'rgba(130,80,255,0.45)';
+  ctx.lineWidth=1.5;ctx.stroke();
+}
+
+function drawParts(){
+  for(const p of particles){
+    const al=Math.max(0,p.life/p.ml);
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r*al,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue|0},90%,65%,${al.toFixed(2)})`;
     ctx.fill();
-    ctx.stroke();
-
-    // Polarity symbol
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = isLight ? '#8060cc' : '#aa88ff';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(isLight ? 'L' : 'D', o.x + o.w / 2, o.y + o.h / 2);
-    ctx.restore();
+  }
 }
 
-function drawPlayer() {
-    ctx.save();
-    const pol = polarity === 0;
-    const mainCol = pol ? LIGHT_COL : '#7040dd';
-    const glowCol = pol ? 'rgba(240,230,255,0.3)' : 'rgba(112,64,221,0.3)';
-
-    // Glow
-    ctx.shadowColor = mainCol;
-    ctx.shadowBlur = 18;
-
-    // Outer ring
-    ctx.strokeStyle = mainCol;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(PLAYER_X, playerY, PLAYER_R, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Fill
-    ctx.fillStyle = glowCol;
-    ctx.beginPath();
-    ctx.arc(PLAYER_X, playerY, PLAYER_R - 1, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Inner dot
-    ctx.fillStyle = mainCol;
-    ctx.beginPath();
-    ctx.arc(PLAYER_X, playerY, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+function drawUI(){
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font='bold 28px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign='left';
+  ctx.fillText(score,16,36);
+  if(multiplier>1){
+    ctx.fillStyle=`hsl(${((hueShift+50)%360)|0},100%,70%)`;
+    ctx.font='bold 16px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('x'+multiplier,16,56);
+  }
+  if(slowmoTimer>0){
+    ctx.fillStyle=`hsla(${((hueShift+50)%360)|0},100%,75%,${(0.5+0.5*Math.sin(gameTime*12)).toFixed(2)})`;
+    ctx.font='bold 12px sans-serif';ctx.textAlign='right';
+    ctx.fillText('SLOW',W-16,36);
+  }
+  ctx.textAlign='right';ctx.font='12px sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.fillText(ppol===0?'WHITE':'BLACK',W-16,56);
 }
 
-function drawStartScreen() {
-    ctx.fillStyle = 'rgba(5,5,15,0.65)';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('GRAVITY FLIP', W / 2, H / 2 - 60);
-
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('Flip between floor & ceiling', W / 2, H / 2 - 20);
-    ctx.fillText('Match opposite polarity to pass gates', W / 2, H / 2 + 5);
-
-    const pulse = 0.6 + Math.sin(Date.now() * 0.004) * 0.4;
-    ctx.globalAlpha = pulse;
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText('TAP TO START', W / 2, H / 2 + 70);
-    ctx.globalAlpha = 1;
-
-    ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#666';
-    ctx.fillText('Space / Enter / Tap', W / 2, H / 2 + 100);
-
-    if (bestScore > 0) {
-        ctx.fillStyle = '#888';
-        ctx.fillText('Best: ' + bestScore, W / 2, H / 2 + 140);
-    }
+function drawStart(){
+  ctx.fillStyle='#fff';
+  ctx.font='bold 42px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign='center';
+  ctx.save();ctx.shadowColor='rgba(100,60,255,0.6)';ctx.shadowBlur=20;
+  ctx.fillText('Gravity Flip',W/2,H*0.32);
+  ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.font='14px sans-serif';
+  ctx.fillText('Polarity Runner',W/2,H*0.32+30);
+  const pulse=0.55+0.45*Math.sin(Date.now()/400);
+  ctx.fillStyle=`rgba(255,255,255,${pulse.toFixed(2)})`;
+  ctx.font='18px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('Tap to Start',W/2,H*0.55);
+  ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='13px sans-serif';
+  ctx.fillText('Tap / Space / Enter to flip gravity & polarity',W/2,H*0.63);
+  ctx.fillText('Pass through gates of the OPPOSITE color',W/2,H*0.67);
+  ctx.fillText('Collect sparks for bonus points',W/2,H*0.71);
+  if(best>0){
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='15px sans-serif';
+    ctx.fillText('Best: '+best,W/2,H*0.80);
+  }
 }
 
-function drawGameOver() {
-    ctx.fillStyle = 'rgba(5,5,15,0.7)';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = SPIKE_COL;
-    ctx.font = 'bold 30px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('GAME OVER', W / 2, H / 2 - 70);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 44px sans-serif';
-    ctx.fillText(score, W / 2, H / 2 - 20);
-
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('SCORE', W / 2, H / 2 + 10);
-
-    ctx.fillStyle = '#ffdd44';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText('Best: ' + bestScore, W / 2, H / 2 + 50);
-
-    if (bestCombo > 1) {
-        ctx.fillStyle = '#aaa';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Best Combo: x' + bestCombo, W / 2, H / 2 + 78);
-    }
-
-    const pulse = 0.6 + Math.sin(Date.now() * 0.004) * 0.4;
-    ctx.globalAlpha = pulse;
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText('TAP TO RETRY', W / 2, H / 2 + 120);
-    ctx.globalAlpha = 1;
+function drawGO(){
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ff4466';
+  ctx.font='bold 20px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign='center';ctx.fillText(deathCause,W/2,H*0.30);
+  ctx.fillStyle='#fff';
+  ctx.font='bold 38px "Segoe UI",system-ui,sans-serif';
+  ctx.save();ctx.shadowColor='rgba(255,50,80,0.5)';ctx.shadowBlur=15;
+  ctx.fillText('Game Over',W/2,H*0.40);ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='16px sans-serif';
+  ctx.fillText('SCORE',W/2,H*0.45);
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font='bold 48px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText(score,W/2,H*0.52);
+  ctx.fillStyle=`hsl(${((hueShift+50)%360)|0},80%,65%)`;
+  ctx.font='bold 24px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('Best: '+best,W/2,H*0.60);
+  if(multiplier>1){
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='14px sans-serif';
+    ctx.fillText('Max Multiplier: x'+multiplier,W/2,H*0.65);
+  }
+  if(freezeTimer<=0){
+    const p2=0.5+0.5*Math.sin(Date.now()/350);
+    ctx.fillStyle=`rgba(255,255,255,${p2.toFixed(2)})`;
+    ctx.font='18px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('Tap to Retry',W/2,H*0.78);
+  }
 }
 
-// --- Main Loop ---
-function loop(now) {
-    requestAnimationFrame(loop);
-    if (!lastTime) { lastTime = now; return; }
-    let dt = (now - lastTime) / 1000;
-    lastTime = now;
-    dt = Math.min(dt, 0.05);
-
-    if (state === 'playing') {
-        update(dt);
-    }
-
-    draw();
-}
 requestAnimationFrame(loop);
-
-// --- Input ---
-let inputBlocked = false;
-function handleInput() {
-    if (inputBlocked) return;
-    if (state === 'start') {
-        resetGame();
-    } else if (state === 'playing') {
-        doFlip();
-    } else if (state === 'gameover') {
-        inputBlocked = true;
-        setTimeout(() => { inputBlocked = false; }, 300);
-        resetGame();
-    }
-}
-
-canvas.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    handleInput();
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code === 'Enter') {
-        e.preventDefault();
-        handleInput();
-    }
-});
-
-// Prevent double-tap zoom on mobile
-canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-
-// Initial HUD
-updateHUD();
-bestEl.textContent = bestScore;
+})();
 </script>
 </body>
 </html>
