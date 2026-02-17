@@ -2,271 +2,256 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Gravity Flip - Free HTML5 Game</title>
 <meta name="description" content="Play Gravity Flip - Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.">
-<meta name="theme-color" content="#0b0f1a">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Gravity Flip - Free HTML5 Game">
-<meta property="og:description" content="Tap to flip gravity up/down while dodging obstacles. Collect stars for bonus points in this hyper-casual HTML5 game.">
+<meta property="og:description" content="Tap to flip gravity up/down while dodging obstacles. Collect combo sparks for bonus points. How far can you go?">
 <meta property="og:url" content="https://balinti.github.io/gravity-flip/">
-<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect fill='%230b0f1a' width='400' height='300'/%3E%3Ctext x='200' y='130' text-anchor='middle' fill='%2300e5ff' font-size='36' font-family='Arial'%3EGravity Flip%3C/text%3E%3Ctext x='200' y='180' text-anchor='middle' fill='%23ff00aa' font-size='18' font-family='Arial'%3EHeatline%3C/text%3E%3Ccircle cx='200' cy='220' r='12' fill='%2300e5ff'/%3E%3C/svg%3E">
+<meta property="og:image" content="https://balinti.github.io/gravity-flip/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gravity Flip - Free HTML5 Game">
-<meta name="twitter:description" content="Tap to flip gravity up/down while dodging obstacles. Collect stars for bonus points in this hyper-casual HTML5 game.">
-<meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect fill='%230b0f1a' width='400' height='300'/%3E%3Ctext x='200' y='130' text-anchor='middle' fill='%2300e5ff' font-size='36' font-family='Arial'%3EGravity Flip%3C/text%3E%3Ctext x='200' y='180' text-anchor='middle' fill='%23ff00aa' font-size='18' font-family='Arial'%3EHeatline%3C/text%3E%3Ccircle cx='200' cy='220' r='12' fill='%2300e5ff'/%3E%3C/svg%3E">
-<link rel="canonical" href="https://balinti.github.io/gravity-flip/">
+<meta name="twitter:description" content="Tap to flip gravity up/down while dodging obstacles. Collect combo sparks for bonus points.">
+<meta name="twitter:image" content="https://balinti.github.io/gravity-flip/og-image.png">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4099346100621490" crossorigin="anonymous"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#060a12;font-family:'Segoe UI',Arial,sans-serif;display:grid;place-items:center}
-#wrap{position:relative;width:min(420px,100vw);height:min(750px,100vh);aspect-ratio:420/750;display:flex;flex-direction:column;align-items:center}
-canvas{display:block;width:100%;flex:1;border-radius:8px;touch-action:none}
-#footer{width:100%;padding:6px 12px;text-align:center;font-size:11px;color:#445;line-height:1.6}
-#footer a{color:#556;text-decoration:none;margin:0 6px}
-#footer a:hover{color:#88a}
+html,body{width:100%;height:100%;overflow:hidden;background:#05050f;font-family:'Segoe UI',system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#wrap{position:relative;width:100%;max-width:420px;height:100vh;max-height:750px;margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(180deg,#0a0a1a 0%,#0f0f2e 100%)}
+#top-bar{height:36px;display:flex;align-items:center;justify-content:center;color:#445;font-size:11px;letter-spacing:1px;flex-shrink:0}
+#canvas-wrap{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#bot-bar{height:36px;display:flex;align-items:center;justify-content:center;color:#445;font-size:11px;letter-spacing:1px;flex-shrink:0}
 </style>
 </head>
 <body>
 <div id="wrap">
-<canvas id="c"></canvas>
-<div id="footer">
-<a href="#">How to Play</a> | <a href="#">Privacy</a> | <a href="#">Contact</a><br>
-Gravity Flip &copy; 2026 &mdash; A free hyper-casual HTML5 game. Flip gravity to dodge hazards and thread heat gates.
-</div>
+  <div id="top-bar">GRAVITY FLIP</div>
+  <div id="canvas-wrap"><canvas id="c"></canvas></div>
+  <div id="bot-bar">COMBO GATES</div>
 </div>
 <script>
 'use strict';
 (()=>{
 
+/* ======== CANVAS SETUP ======== */
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const DPR = Math.min(2, devicePixelRatio || 1);
-const LS_KEY = 'gravityflip_highscore_v1';
-const LS_MULT_KEY = 'gravityflip_bestmult_v1';
+const wrap = document.getElementById('canvas-wrap');
+let W, H, dpr;
+const LS_KEY = 'gf_combo_best';
 
-/* ========== Canvas sizing ========== */
-let W, H;
 function resize() {
-  const rect = canvas.getBoundingClientRect();
-  W = rect.width;
-  H = rect.height;
-  canvas.width = W * DPR;
-  canvas.height = H * DPR;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const r = wrap.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
+  W = r.width; H = r.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-resize();
 window.addEventListener('resize', resize);
+resize();
 
-/* ========== Constants ========== */
-const TUNNEL_PAD = 34;
-const PLAYER_R = 10;
-const FLIP_DUR = 0.15;
-const SLOWMO_DUR = 0.6;
-const SLOWMO_SCALE = 0.35;
-const MAX_FUEL = 3;
-const BANK_INTERVAL_MIN = 8;
-const BANK_INTERVAL_MAX = 12;
-const FREEZE_DUR_MIN = 0.08;
-const FREEZE_DUR_MAX = 0.12;
+/* ======== TUNING CONSTANTS ======== */
+const RAIL_PAD = 0.10;          // fraction from top/bottom for rails
+const ORB_R = 11;
+const FLIP_SPEED = 8;           // pixels per frame-ish (scaled by dt)
+const BASE_SCROLL = 2.6;
+const MAX_SCROLL = 6.0;
+const SPEED_RAMP = 0.00025;     // per distance unit
+const GATE_W = 26;
+const MIN_GATE_SPACING = 155;
+const SPARK_R = 7;
+const PARTICLE_CAP = 140;
+const EDGE_THRESHOLD = 6;       // pixels for near-miss
 
-/* ========== Game state ========== */
+/* ======== GAME STATE ======== */
 let state = 'start';
-let score, displayScore, bestScore, bestMult;
-let multiplier, maxMultReached;
-let fuel;
-let runTime, speed;
-let player;
-let gates, hazards, orbs, particles;
-let timeScale, slowmoTimer, slowmoActive;
-let freezeTimer;
-let shakeX, shakeY, shakeMag, shakeTimer;
-let nextBankDist, distTravelled;
-let lastHazardX;
-let tunnelHue;
-let prevTime;
-let startAnimTime = 0;
+let score, bestScore, displayScore;
+let combo, comboMult, maxCombo;
+let scrollSpeed;
+let orbX, orbY, orbLane;        // lane: 0=bottom rail, 1=top rail
+let orbFlipping, orbFromY, orbToY, orbFlipT;
+let orbSquashX, orbSquashY;
+let railTop, railBot, playH;
+let gates, sparks, particles;
+let dist;
+let shakeX, shakeY, shakePow;
+let edgeAlpha, edgeTimer;
+let hue;
+let lastGateType, flipLockCooldown;
+let speedLevel, speedFlash;
 
 bestScore = parseInt(localStorage.getItem(LS_KEY)) || 0;
-bestMult = parseInt(localStorage.getItem(LS_MULT_KEY)) || 0;
 
-/* ========== Utility ========== */
-function lerp(a, b, t) { return a + (b - a) * t; }
-function clamp(v, mn, mx) { return v < mn ? mn : v > mx ? mx : v; }
-function rand(a, b) { return a + Math.random() * (b - a); }
-function hsl(h, s, l, a) {
-  return a !== undefined
-    ? `hsla(${((h % 360) + 360) % 360},${s}%,${l}%,${a})`
-    : `hsl(${((h % 360) + 360) % 360},${s}%,${l}%)`;
+/* ======== GATE TYPES ======== */
+const GT = { SIMPLE: 0, SPLIT: 1, PULSE: 2, FLIPLOCK: 3 };
+
+function computeRails() {
+  railTop = H * RAIL_PAD;
+  railBot = H * (1 - RAIL_PAD);
+  playH = railBot - railTop;
 }
-function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 
-/* ========== Particles ========== */
-function spawnParticles(x, y, count, hue, spdMin, spdMax, life, sMin, sMax) {
-  for (let i = 0; i < count; i++) {
-    const a = rand(0, Math.PI * 2);
-    const spd = rand(spdMin, spdMax);
-    particles.push({
-      x, y,
-      vx: Math.cos(a) * spd,
-      vy: Math.sin(a) * spd,
-      life, maxLife: life,
-      size: rand(sMin || 2, sMax || 5),
-      hue: hue + rand(-20, 20),
-      sat: rand(80, 100),
-      lit: rand(50, 70)
-    });
+/* ======== RESET ======== */
+function resetGame() {
+  computeRails();
+  score = 0; displayScore = 0;
+  combo = 0; comboMult = 1; maxCombo = 0;
+  scrollSpeed = BASE_SCROLL;
+  orbX = W * 0.2;
+  orbLane = 0; // start on bottom
+  orbY = railBot;
+  orbFlipping = false; orbFlipT = 0;
+  orbSquashX = 1; orbSquashY = 1;
+  gates = []; sparks = []; particles = [];
+  dist = 0;
+  shakeX = 0; shakeY = 0; shakePow = 0;
+  edgeAlpha = 0; edgeTimer = 0;
+  hue = 190;
+  lastGateType = -1; flipLockCooldown = 0;
+  speedLevel = 0; speedFlash = 0;
+  seedInitialGates();
+}
+
+/* ======== GATE GENERATION ======== */
+function seedInitialGates() {
+  let x = W + 120;
+  for (let i = 0; i < 5; i++) {
+    x = spawnGateAt(x);
   }
 }
 
-function updateParticles(dt) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.vy += 350 * dt;
-    p.life -= dt;
-    if (p.life <= 0) particles.splice(i, 1);
-  }
+function pickGateType() {
+  // Weighted selection based on distance
+  const pool = [GT.SIMPLE, GT.SIMPLE, GT.SIMPLE];
+  if (dist > 300) pool.push(GT.SPLIT, GT.SPLIT);
+  if (dist > 700) pool.push(GT.PULSE, GT.PULSE);
+  if (dist > 1200 && flipLockCooldown <= 0) pool.push(GT.FLIPLOCK);
+
+  let t = pool[Math.floor(Math.random() * pool.length)];
+  // Never flip-lock back to back
+  if (t === GT.FLIPLOCK && lastGateType === GT.FLIPLOCK) t = GT.SIMPLE;
+  lastGateType = t;
+  if (t === GT.FLIPLOCK) flipLockCooldown = 3;
+  else if (flipLockCooldown > 0) flipLockCooldown--;
+  return t;
 }
 
-function drawParticles() {
-  for (const p of particles) {
-    const a = clamp(p.life / p.maxLife, 0, 1);
-    ctx.globalAlpha = a;
-    ctx.fillStyle = hsl(p.hue, p.sat, p.lit);
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
-    ctx.fill();
+function spawnGateAt(afterX) {
+  const type = pickGateType();
+  const extraSpace = Math.max(0, (scrollSpeed - BASE_SCROLL) * 18);
+  const spacing = MIN_GATE_SPACING + Math.random() * 70 + extraSpace;
+  const x = afterX + spacing;
+
+  // Gap fraction (how much of playH is open)
+  const gapFrac = 0.30 + Math.random() * 0.14;
+  const gapPx = playH * gapFrac;
+
+  // Decide which lane(s) are safe
+  let safeLane; // 0=bot safe, 1=top safe, 2=both safe (split)
+  if (type === GT.SPLIT) {
+    safeLane = 2;
+  } else {
+    safeLane = Math.random() < 0.5 ? 0 : 1;
   }
-  ctx.globalAlpha = 1;
-}
 
-/* ========== Tunnel helpers ========== */
-const tunnelTop = () => TUNNEL_PAD;
-const tunnelBot = () => H - TUNNEL_PAD;
-const tunnelH = () => H - TUNNEL_PAD * 2;
+  // Build block heights
+  let topH, botH, midGap;
+  if (type === GT.SPLIT) {
+    // Both lanes have openings; blocks are top, middle, bottom
+    const openingH = gapPx * 0.45;
+    const midH = playH - openingH * 2;
+    topH = 0; botH = 0;
+    // Store as special split gate
+    return spawnSplitGate(x, type, openingH, midH);
+  }
 
-/* ========== Player factory ========== */
-function createPlayer() {
-  return {
-    x: W * 0.18,
-    y: H * 0.5,
-    vy: 0,
-    onGround: true,
-    flipping: false,
-    flipTimer: 0,
-    flipFrom: 0,
-    flipTo: 0,
-    hue: 180,
-    trail: []
+  if (safeLane === 1) {
+    // Top is safe opening, bottom is mostly blocked
+    topH = playH * (0.05 + Math.random() * 0.1); // small top block
+    botH = playH - gapPx - topH;
+  } else {
+    // Bottom safe opening
+    botH = playH * (0.05 + Math.random() * 0.1);
+    topH = playH - gapPx - botH;
+  }
+  topH = Math.max(2, topH);
+  botH = Math.max(2, botH);
+
+  const g = {
+    x, type, safeLane, topH, botH,
+    w: GATE_W,
+    pulsePhase: Math.random() * Math.PI * 2,
+    pulseAmp: type === GT.PULSE ? playH * 0.055 : 0,
+    flipLockStart: type === GT.FLIPLOCK ? x - 55 - Math.random() * 30 : 0,
+    scored: false, edged: false, comboChecked: false,
+    split: false
   };
-}
+  gates.push(g);
 
-/* ========== Difficulty curve ========== */
-function diff() {
-  const t = runTime;
-  return {
-    speed: 180 + t * 3.0,
-    gateRadius: clamp(28 - t * 0.16, 14, 28),
-    gateSpacing: clamp(210 - t * 1.2, 120, 210),
-    crushGap: clamp(88 - t * 0.55, 44, 88),
-    hazardProb: clamp(0.013 + t * 0.0004, 0.013, 0.05),
-    telegraphTime: clamp(1.2 - t * 0.007, 0.5, 1.2),
-    laserProb: clamp(0.32 + t * 0.003, 0.32, 0.58),
-    driftAmp: clamp(4 + t * 0.12, 4, 16)
-  };
-}
-
-/* ========== Init run ========== */
-function initRun() {
-  score = 0;
-  displayScore = 0;
-  multiplier = 1;
-  maxMultReached = 1;
-  fuel = 1;
-  runTime = 0;
-  speed = 180;
-  player = createPlayer();
-  gates = [];
-  hazards = [];
-  orbs = [];
-  particles = [];
-  timeScale = 1;
-  slowmoTimer = 0;
-  slowmoActive = false;
-  freezeTimer = 0;
-  shakeX = 0;
-  shakeY = 0;
-  shakeMag = 0;
-  shakeTimer = 0;
-  distTravelled = 0;
-  nextBankDist = rand(BANK_INTERVAL_MIN, BANK_INTERVAL_MAX) * 180;
-  lastHazardX = W + 300;
-  tunnelHue = 200;
-
-  // Seed initial gates
-  for (let x = W + 80; x < W + 650; x += rand(130, 190)) {
-    spawnGate(x, false);
+  // Spark in the RISKY opening (opposite of safe lane)
+  const sparkLane = 1 - safeLane;
+  let sparkY;
+  if (sparkLane === 1) {
+    // Top opening (risky): center of top gap
+    sparkY = railTop + topH + (playH - topH - botH) * 0.5;
+  } else {
+    sparkY = railBot - botH - (playH - topH - botH) * 0.5;
   }
+  // Actually the safe opening center should be different...
+  // Risky lane is the blocked side. Spark should be placed where there's a small gap
+  // For non-split: the "safe" opening is the big gap. The small gap on the other side IS risky.
+  // But we want sparks reachable - place them near the edge of safe zone on the risky side.
+  if (type !== GT.FLIPLOCK) {
+    // Place spark in the safe opening but close to the dangerous edge
+    if (safeLane === 1) {
+      // Safe = top. Spark at the bottom edge of the safe opening (risky)
+      sparkY = railTop + topH + gapPx * 0.8;
+    } else {
+      // Safe = bottom. Spark at the top edge of the safe opening (risky)
+      sparkY = railBot - botH - gapPx * 0.8;
+    }
+    sparkY = clamp(sparkY, railTop + ORB_R + 2, railBot - ORB_R - 2);
+    sparks.push({ x: x + GATE_W / 2, y: sparkY, alive: true, t: Math.random() * 6, gateX: x });
+  }
+
+  return x;
 }
 
-/* ========== Gate spawning ========== */
-function spawnGate(x, isBank) {
-  const d = diff();
-  const margin = 42;
-  const yy = rand(tunnelTop() + margin, tunnelBot() - margin);
-  gates.push({
-    x, y: yy,
-    radius: isBank ? 30 : d.gateRadius,
-    isBank,
-    passed: false,
-    hue: isBank ? 50 : rand(160, 300)
-  });
+function spawnSplitGate(x, type, openingH, midH) {
+  // Split gate: top opening, middle block, bottom opening
+  const g = {
+    x, type, safeLane: 2,
+    topH: 0, botH: 0,
+    splitOpenH: openingH, splitMidH: midH,
+    w: GATE_W,
+    pulsePhase: 0, pulseAmp: 0,
+    flipLockStart: 0,
+    scored: false, edged: false, comboChecked: false,
+    split: true
+  };
+  gates.push(g);
+
+  // Spark in one of the openings (random)
+  const sparkTop = Math.random() < 0.5;
+  let sparkY;
+  if (sparkTop) {
+    sparkY = railTop + openingH * 0.5;
+  } else {
+    sparkY = railBot - openingH * 0.5;
+  }
+  sparks.push({ x: x + GATE_W / 2, y: sparkY, alive: true, t: Math.random() * 6, gateX: x });
+  return x;
 }
 
-/* ========== Hazard spawning ========== */
-function spawnLaser(x) {
-  const d = diff();
-  const fromTop = Math.random() < 0.5;
-  const len = rand(tunnelH() * 0.3, tunnelH() * 0.52);
-  hazards.push({
-    type: 'laser',
-    x, y: fromTop ? tunnelTop() : tunnelBot() - len,
-    w: 6, h: len,
-    telegraph: d.telegraphTime,
-    telegraphMax: d.telegraphTime,
-    active: false,
-    nearMissed: false,
-    hue: 0
-  });
-}
+/* ======== HELPERS ======== */
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-function spawnCrusher(x) {
-  const d = diff();
-  const gap = d.crushGap;
-  const topH = rand(22, tunnelH() - gap - 22);
-  hazards.push({
-    type: 'crusher',
-    x, w: 28,
-    topH,
-    botY: tunnelTop() + topH + gap,
-    gap,
-    telegraph: d.telegraphTime,
-    telegraphMax: d.telegraphTime,
-    active: false,
-    nearMissed: false,
-    hue: 30
-  });
-}
-
-/* ========== Fuel Orb spawning ========== */
-function spawnOrb(x) {
-  const y = rand(tunnelTop() + 30, tunnelBot() - 30);
-  orbs.push({ x, y, radius: 8, collected: false, hue: 120, pulse: 0 });
-}
-
-/* ========== Collision ========== */
 function circleAABB(cx, cy, cr, rx, ry, rw, rh) {
   const nx = clamp(cx, rx, rx + rw);
   const ny = clamp(cy, ry, ry + rh);
@@ -274,784 +259,605 @@ function circleAABB(cx, cy, cr, rx, ry, rw, rh) {
   return dx * dx + dy * dy < cr * cr;
 }
 
-function dist2d(x1, y1, x2, y2) {
-  const dx = x1 - x2, dy = y1 - y2;
-  return Math.sqrt(dx * dx + dy * dy);
+/* ======== PARTICLES ======== */
+function burst(x, y, count, baseHue, spd, life) {
+  for (let i = 0; i < count && particles.length < PARTICLE_CAP; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = (0.4 + Math.random()) * spd;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+      life, maxLife: life,
+      hue: baseHue + Math.random() * 50 - 25,
+      sz: 1.5 + Math.random() * 3
+    });
+  }
 }
 
-/* ========== Screen shake ========== */
-function triggerShake(mag, dur) {
-  shakeMag = mag;
-  shakeTimer = dur;
-}
+/* ======== FLIP ACTION ======== */
+function doFlip() {
+  if (state !== 'playing' || orbFlipping) return;
 
-/* ========== Input ========== */
-function handleInput() {
-  if (state === 'start') {
-    state = 'playing';
-    initRun();
-    return;
-  }
-  if (state === 'gameover') {
-    state = 'playing';
-    initRun();
-    return;
-  }
-  if (state === 'playing') {
-    if (player.flipping) {
-      // Mid-flip: slow-mo if fuel available
-      if (fuel >= 1 && !slowmoActive) {
-        fuel--;
-        slowmoActive = true;
-        slowmoTimer = SLOWMO_DUR;
-        timeScale = SLOWMO_SCALE;
-        spawnParticles(player.x, player.y, 8, 280, 40, 100, 0.4, 2, 4);
+  // Check flip-lock zones
+  for (const g of gates) {
+    if (g.type === GT.FLIPLOCK) {
+      if (orbX + ORB_R >= g.flipLockStart && orbX - ORB_R <= g.x) {
+        // Blocked
+        shakePow = Math.max(shakePow, 3);
+        burst(orbX, orbY, 5, 0, 1.5, 0.35);
+        return;
       }
-      return;
     }
-    // Start flip
-    player.flipping = true;
-    player.flipTimer = 0;
-    player.flipFrom = player.y;
-    if (player.onGround) {
-      player.flipTo = tunnelTop() + PLAYER_R + 2;
-    } else {
-      player.flipTo = tunnelBot() - PLAYER_R - 2;
-    }
-    player.onGround = !player.onGround;
-    player.vy = 0;
-    spawnParticles(player.x, player.y, 12, player.hue, 60, 180, 0.35, 2, 5);
   }
+
+  orbLane = 1 - orbLane;
+  orbFromY = orbY;
+  orbToY = orbLane === 0 ? railBot : railTop;
+  orbFlipping = true;
+  orbFlipT = 0;
+  orbSquashX = 1.35; orbSquashY = 0.7;
+  burst(orbX, orbY, 8, hue, 2.5, 0.45);
 }
 
-canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); handleInput(); });
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); handleInput(); }
+/* ======== INPUT ======== */
+function handleInput(e) {
+  if (e) e.preventDefault();
+  if (state === 'start') { state = 'playing'; resetGame(); }
+  else if (state === 'playing') doFlip();
+  else if (state === 'gameover') { state = 'playing'; resetGame(); }
+}
+
+canvas.addEventListener('pointerdown', handleInput);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault(); handleInput(null);
+  }
 });
 
-/* ========== Update ========== */
-function update(dt) {
-  if (freezeTimer > 0) { freezeTimer -= dt; return; }
-
-  const gdt = dt * timeScale;
-  runTime += gdt;
-  const d = diff();
-  speed = d.speed;
-
-  // Slow-mo countdown
-  if (slowmoActive) {
-    slowmoTimer -= dt;
-    if (slowmoTimer <= 0) {
-      slowmoActive = false;
-      timeScale = 1;
-    }
-  }
-
-  // Shake
-  if (shakeTimer > 0) {
-    shakeTimer -= dt;
-    shakeX = (Math.random() - 0.5) * shakeMag * 2;
-    shakeY = (Math.random() - 0.5) * shakeMag * 2;
-    shakeMag *= 0.9;
-  } else {
-    shakeX = 0;
-    shakeY = 0;
-  }
-
-  // Hue cycling
-  player.hue = (player.hue + 55 * gdt) % 360;
-  tunnelHue = (tunnelHue + 12 * gdt) % 360;
-
-  // Player flip / position
-  if (player.flipping) {
-    player.flipTimer += gdt;
-    const t = clamp(player.flipTimer / FLIP_DUR, 0, 1);
-    player.y = lerp(player.flipFrom, player.flipTo, easeInOutQuad(t));
-    if (t >= 1) {
-      player.flipping = false;
-      player.y = player.flipTo;
-    }
-  } else {
-    const driftAmp = d.driftAmp;
-    const target = player.onGround ? tunnelBot() - PLAYER_R - 2 : tunnelTop() + PLAYER_R + 2;
-    const drift = Math.sin(runTime * 2.5) * driftAmp * 0.12;
-    player.y = lerp(player.y, target + drift, 8 * gdt);
-  }
-
-  // Trail
-  player.trail.push({ x: player.x, y: player.y, a: 1, hue: player.hue });
-  if (player.trail.length > 24) player.trail.shift();
-  for (const tr of player.trail) tr.a -= 2.5 * gdt;
-
-  // Distance
-  const moveDist = speed * gdt;
-  distTravelled += moveDist;
-
-  // Score tick
-  score += speed * gdt * 0.02 * multiplier;
-  displayScore = lerp(displayScore, score, 6 * dt);
-
-  // Move entities left
-  for (const g of gates) g.x -= moveDist;
-  for (const h of hazards) h.x -= moveDist;
-  for (const o of orbs) o.x -= moveDist;
-
-  // Spawn gates
-  let rightmostGate = 0;
-  for (const g of gates) if (g.x > rightmostGate) rightmostGate = g.x;
-  if (rightmostGate < W + 80) {
-    const spacing = rand(d.gateSpacing, d.gateSpacing + 50);
-    const nx = rightmostGate + spacing;
-    if (distTravelled >= nextBankDist) {
-      spawnGate(nx, true);
-      nextBankDist = distTravelled + rand(BANK_INTERVAL_MIN, BANK_INTERVAL_MAX) * speed;
-    } else {
-      spawnGate(nx, false);
-    }
-  }
-
-  // Spawn hazards with fairness
-  const minLeadDist = player.x + speed * 0.85;
-  const minSpacing = speed * 0.55;
-  if (Math.random() < d.hazardProb * gdt * 60) {
-    const hx = W + rand(50, 140);
-    if (hx >= minLeadDist && hx - lastHazardX >= minSpacing) {
-      let safeToSpawn = true;
-      for (const g of gates) {
-        if (Math.abs(g.x - hx) < 55) { safeToSpawn = false; break; }
-      }
-      if (safeToSpawn) {
-        if (Math.random() < d.laserProb) spawnLaser(hx);
-        else spawnCrusher(hx);
-        lastHazardX = hx;
-      }
-    }
-  }
-
-  // Spawn orbs
-  if (Math.random() < 0.005 * gdt * 60) {
-    const ox = W + rand(60, 150);
-    let safe = true;
-    for (const h of hazards) { if (Math.abs(h.x - ox) < 40) { safe = false; break; } }
-    if (safe) spawnOrb(ox);
-  }
-
-  // Update hazards
-  for (let i = hazards.length - 1; i >= 0; i--) {
-    const h = hazards[i];
-    if (h.telegraph > 0) {
-      h.telegraph -= gdt;
-      if (h.telegraph <= 0) h.active = true;
-    }
-    if (h.x < -70) { hazards.splice(i, 1); continue; }
-    if (!h.active) continue;
-
-    let hit = false;
-    if (h.type === 'laser') {
-      hit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, h.y, h.w, h.h);
-      if (!hit && !h.nearMissed) {
-        const expanded = 14;
-        if (circleAABB(player.x, player.y, PLAYER_R + expanded, h.x - h.w / 2, h.y, h.w, h.h)) {
-          h.nearMissed = true;
-          score += 15 * multiplier;
-          fuel = Math.min(MAX_FUEL, fuel + 0.25);
-          spawnParticles(player.x, player.y, 6, 60, 30, 80, 0.3, 1, 3);
-          triggerShake(2, 0.1);
-        }
-      }
-    } else if (h.type === 'crusher') {
-      const topHit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, tunnelTop(), h.w, h.topH);
-      const botHit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, h.botY, h.w, tunnelBot() - h.botY);
-      hit = topHit || botHit;
-      if (!hit && !h.nearMissed) {
-        const inXRange = player.x > h.x - h.w / 2 - PLAYER_R - 10 && player.x < h.x + h.w / 2 + PLAYER_R + 10;
-        if (inXRange && player.y > tunnelTop() + h.topH - 6 && player.y < h.botY + 6) {
-          h.nearMissed = true;
-          score += 15 * multiplier;
-          fuel = Math.min(MAX_FUEL, fuel + 0.25);
-          spawnParticles(player.x, player.y, 6, 60, 30, 80, 0.3, 1, 3);
-          triggerShake(2, 0.1);
-        }
-      }
-    }
-
-    if (hit) { die(); return; }
-  }
-
-  // Gate collision
-  for (let i = gates.length - 1; i >= 0; i--) {
-    const g = gates[i];
-    if (g.x < -60) { gates.splice(i, 1); continue; }
-    if (g.passed) continue;
-    if (g.x < player.x) {
-      g.passed = true;
-      const dd = dist2d(player.x, player.y, g.x, g.y);
-      if (g.isBank) {
-        const bonus = Math.floor(multiplier * 50);
-        score += bonus;
-        spawnParticles(g.x, g.y, 22, 50, 80, 200, 0.5, 3, 7);
-        triggerShake(4, 0.15);
-        multiplier = 1;
-      } else {
-        if (dd < g.radius * 0.75) {
-          multiplier = Math.min(10, multiplier + 1);
-          maxMultReached = Math.max(maxMultReached, multiplier);
-          spawnParticles(g.x, g.y, 16, g.hue, 60, 150, 0.4, 2, 5);
-          score += 25 * multiplier;
-        } else if (dd < g.radius * 1.4) {
-          score += 5;
-          spawnParticles(g.x, g.y, 5, g.hue, 30, 60, 0.25, 1, 3);
-        } else {
-          if (multiplier > 1) {
-            spawnParticles(g.x, g.y, 10, 0, 40, 100, 0.35, 2, 4);
-          }
-          multiplier = 1;
-        }
-      }
-    }
-  }
-
-  // Orb collision
-  for (let i = orbs.length - 1; i >= 0; i--) {
-    const o = orbs[i];
-    o.pulse += gdt * 4;
-    if (o.x < -30) { orbs.splice(i, 1); continue; }
-    if (!o.collected && dist2d(player.x, player.y, o.x, o.y) < PLAYER_R + o.radius) {
-      o.collected = true;
-      fuel = Math.min(MAX_FUEL, fuel + 1);
-      spawnParticles(o.x, o.y, 10, 120, 50, 120, 0.35, 2, 5);
-      orbs.splice(i, 1);
-    }
-  }
-
-  // Tunnel wall collision
-  if (player.y - PLAYER_R < tunnelTop() + 1 || player.y + PLAYER_R > tunnelBot() - 1) {
-    die();
-    return;
-  }
-
-  updateParticles(gdt);
-}
-
-/* ========== Die ========== */
+/* ======== DIE ======== */
 function die() {
   state = 'gameover';
-  spawnParticles(player.x, player.y, 45, player.hue, 80, 300, 0.7, 3, 8);
-  spawnParticles(player.x, player.y, 25, 0, 60, 220, 0.5, 2, 6);
-  triggerShake(14, 0.45);
-  freezeTimer = rand(FREEZE_DUR_MIN, FREEZE_DUR_MAX);
-
-  const finalScore = Math.floor(score);
-  if (finalScore > bestScore) {
-    bestScore = finalScore;
-    localStorage.setItem(LS_KEY, bestScore);
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem(LS_KEY, String(bestScore));
   }
-  if (maxMultReached > bestMult) {
-    bestMult = maxMultReached;
-    localStorage.setItem(LS_MULT_KEY, bestMult);
-  }
+  shakePow = 14;
+  burst(orbX, orbY, 35, 0, 4.5, 0.9);
+  burst(orbX, orbY, 20, hue, 3.5, 0.7);
 }
 
-/* ========== Drawing ========== */
-function draw() {
+/* ======== MAIN LOOP ======== */
+let lastT = 0;
+
+function frame(ts) {
+  requestAnimationFrame(frame);
+  if (!lastT) { lastT = ts; return; }
+  let dt = (ts - lastT) / 1000;
+  lastT = ts;
+  dt = Math.min(dt, 0.05); // clamp
+
+  computeRails();
+  hue = (hue + dt * 18) % 360;
+
+  // Shake decay
+  if (shakePow > 0.2) {
+    shakeX = (Math.random() - 0.5) * shakePow * 2;
+    shakeY = (Math.random() - 0.5) * shakePow * 2;
+    shakePow *= Math.pow(0.06, dt); // exponential decay
+  } else { shakeX = 0; shakeY = 0; shakePow = 0; }
+
+  if (edgeAlpha > 0) edgeAlpha -= dt * 2.5;
+  if (speedFlash > 0) speedFlash -= dt * 1.8;
+
+  /* ---- PLAYING STATE UPDATE ---- */
+  if (state === 'playing') {
+    // Speed ramp
+    scrollSpeed = Math.min(MAX_SCROLL, BASE_SCROLL + dist * SPEED_RAMP);
+    const spd = scrollSpeed;
+
+    dist += spd;
+
+    // Speed level up
+    const sl = Math.floor(dist / 800);
+    if (sl > speedLevel) {
+      speedLevel = sl;
+      speedFlash = 1;
+      shakePow = Math.max(shakePow, 4);
+    }
+
+    // Orb movement (flip arc)
+    if (orbFlipping) {
+      orbFlipT += dt * FLIP_SPEED;
+      if (orbFlipT >= 1) { orbFlipT = 1; orbFlipping = false; }
+      // Smooth ease
+      const t = orbFlipT;
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      orbY = orbFromY + (orbToY - orbFromY) * ease;
+      // Arc offset (horizontal wiggle for feel - skip, keep vertical)
+    } else {
+      // Snap to rail
+      orbY = orbLane === 0 ? railBot : railTop;
+    }
+
+    // Landing squash
+    if (!orbFlipping) {
+      orbSquashX += (1 - orbSquashX) * Math.min(1, dt * 12);
+      orbSquashY += (1 - orbSquashY) * Math.min(1, dt * 12);
+    }
+
+    // Score = distance + combo bonus
+    score = Math.floor(dist * 0.12) + combo * comboMult * 5;
+
+    // Scroll & process gates
+    for (let i = gates.length - 1; i >= 0; i--) {
+      const g = gates[i];
+      g.x -= spd;
+      if (g.flipLockStart) g.flipLockStart -= spd;
+
+      if (g.x + g.w < -60) { gates.splice(i, 1); continue; }
+
+      // Pulse animation
+      if (g.type === GT.PULSE) {
+        g.pulsePhase += dt * 3.2;
+      }
+
+      // Collision
+      if (g.x < orbX + ORB_R + 2 && g.x + g.w > orbX - ORB_R - 2) {
+        if (collideGate(g)) { die(); return; }
+        // Edge / near-miss check
+        if (!g.edged) {
+          if (checkEdge(g)) {
+            g.edged = true;
+            edgeAlpha = 1; edgeTimer = 0;
+            score += 15;
+            burst(orbX, orbY, 6, 55, 1.8, 0.4);
+            shakePow = Math.max(shakePow, 2.5);
+          }
+        }
+      }
+
+      // Mark scored
+      if (!g.scored && g.x + g.w < orbX - ORB_R) {
+        g.scored = true;
+      }
+
+      // Combo break check
+      if (g.scored && !g.comboChecked) {
+        g.comboChecked = true;
+        let hadSpark = false, collected = false;
+        for (const s of sparks) {
+          if (Math.abs(s.gateX - (g.x + spd * 2)) < GATE_W * 3 ||
+              Math.abs(s.gateX - g.x) < GATE_W * 3) {
+            // This is approximate; gateX shifts, so use original relationship
+          }
+        }
+        // Simpler: check if any spark near this gate's original x was skipped
+        for (const s of sparks) {
+          if (Math.abs(s.x - g.x) < MIN_GATE_SPACING * 0.6) {
+            hadSpark = true;
+            if (!s.alive) collected = true;
+          }
+        }
+        if (hadSpark && !collected) {
+          combo = 0; comboMult = 1;
+        }
+      }
+    }
+
+    // Keep gate pipeline full
+    let rightmost = 0;
+    for (const g of gates) { if (g.x > rightmost) rightmost = g.x; }
+    while (rightmost < W + 300) {
+      rightmost = spawnGateAt(rightmost);
+    }
+
+    // Scroll & collide sparks
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x -= spd;
+      s.gateX -= spd;
+      s.t += dt * 5;
+      if (s.x < -30) { sparks.splice(i, 1); continue; }
+      if (!s.alive) continue;
+      const dx = orbX - s.x, dy = orbY - s.y;
+      if (dx * dx + dy * dy < (ORB_R + SPARK_R + 2) * (ORB_R + SPARK_R + 2)) {
+        s.alive = false;
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        comboMult = combo >= 5 ? 3 : combo >= 2 ? 2 : 1;
+        burst(s.x, s.y, 14, 50, 3, 0.55);
+        shakePow = Math.max(shakePow, 2);
+      }
+    }
+
+    // Rail bounds
+    orbY = clamp(orbY, railTop, railBot);
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * 60 * dt;
+    p.y += p.vy * 60 * dt;
+    p.vx *= Math.pow(0.92, 60 * dt);
+    p.vy *= Math.pow(0.92, 60 * dt);
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  displayScore += (score - displayScore) * Math.min(1, dt * 8);
+
+  render();
+}
+
+/* ======== COLLISION HELPERS ======== */
+function getGateBlocks(g) {
+  // Returns array of {x,y,w,h} rectangles for collision
+  const blocks = [];
+  const po = g.type === GT.PULSE ? Math.sin(g.pulsePhase) * g.pulseAmp : 0;
+
+  if (g.split) {
+    // Split gate: middle block
+    const midY = railTop + g.splitOpenH;
+    const midH = g.splitMidH;
+    if (midH > 2) blocks.push({ x: g.x, y: midY, w: g.w, h: midH });
+  } else {
+    let tH = g.topH + po;
+    let bH = g.botH - po;
+    tH = Math.max(0, tH);
+    bH = Math.max(0, bH);
+    if (tH > 1) blocks.push({ x: g.x, y: railTop, w: g.w, h: tH });
+    if (bH > 1) blocks.push({ x: g.x, y: railBot - bH, w: g.w, h: bH });
+  }
+  return blocks;
+}
+
+function collideGate(g) {
+  const blocks = getGateBlocks(g);
+  const cr = ORB_R - 1.5; // small forgiveness
+  for (const b of blocks) {
+    if (circleAABB(orbX, orbY, cr, b.x, b.y, b.w, b.h)) return true;
+  }
+  return false;
+}
+
+function checkEdge(g) {
+  const blocks = getGateBlocks(g);
+  for (const b of blocks) {
+    // Check proximity to each edge of block
+    const edges = [
+      b.y,          // top edge
+      b.y + b.h     // bottom edge
+    ];
+    for (const ey of edges) {
+      const dy = Math.abs(orbY - ey);
+      if (dy < ORB_R + EDGE_THRESHOLD && dy > ORB_R - 2) {
+        // Also check horizontal overlap
+        if (orbX + ORB_R > b.x - 2 && orbX - ORB_R < b.x + b.w + 2) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/* ======== RENDER ======== */
+function render() {
   ctx.save();
   ctx.translate(shakeX, shakeY);
 
   // Background
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#0b0f1a');
-  bg.addColorStop(0.5, '#0d1225');
-  bg.addColorStop(1, '#080c18');
-  ctx.fillStyle = bg;
+  ctx.fillStyle = '#0a0a1a';
   ctx.fillRect(-20, -20, W + 40, H + 40);
 
-  if (state === 'start') {
-    drawStartScreen();
-    ctx.restore();
-    return;
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(30,30,70,0.12)';
+  ctx.lineWidth = 1;
+  const go = (dist * 0.4) % 40;
+  for (let x = -go; x <= W + 40; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
 
-  drawTunnel();
-  drawHazards();
-  drawGates();
-  drawOrbs();
-  drawTrail();
-  drawPlayer();
-  drawParticles();
+  computeRails();
 
-  if (slowmoActive) drawSlowMoFX();
+  // Rails glow
+  const rHue = hue;
+  ctx.shadowColor = `hsla(${rHue},80%,55%,0.4)`;
+  ctx.shadowBlur = 6;
+  ctx.strokeStyle = `hsla(${rHue},60%,45%,0.5)`;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, railTop); ctx.lineTo(W, railTop); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, railBot); ctx.lineTo(W, railBot); ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  drawHUD();
+  if (state === 'playing' || state === 'gameover') {
+    drawGameWorld();
+    drawHUD();
+  }
 
-  if (state === 'gameover') drawGameOver();
+  if (state === 'start') drawStartScreen();
+  if (state === 'gameover') drawGameOverScreen();
 
   ctx.restore();
 }
 
-/* ---- Tunnel ---- */
-function drawTunnel() {
-  // Top wall
-  const tg = ctx.createLinearGradient(0, 0, 0, TUNNEL_PAD);
-  tg.addColorStop(0, hsl(tunnelHue, 50, 6));
-  tg.addColorStop(1, hsl(tunnelHue, 70, 14, 0.7));
-  ctx.fillStyle = tg;
-  ctx.fillRect(0, 0, W, TUNNEL_PAD);
-
-  // Bottom wall
-  const bg2 = ctx.createLinearGradient(0, H - TUNNEL_PAD, 0, H);
-  bg2.addColorStop(0, hsl(tunnelHue + 30, 70, 14, 0.7));
-  bg2.addColorStop(1, hsl(tunnelHue + 30, 50, 6));
-  ctx.fillStyle = bg2;
-  ctx.fillRect(0, H - TUNNEL_PAD, W, TUNNEL_PAD);
-
-  // Neon edge lines
-  ctx.strokeStyle = hsl(tunnelHue, 100, 50, 0.45);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, tunnelTop());
-  ctx.lineTo(W, tunnelTop());
-  ctx.stroke();
-
-  ctx.strokeStyle = hsl(tunnelHue + 30, 100, 50, 0.45);
-  ctx.beginPath();
-  ctx.moveTo(0, tunnelBot());
-  ctx.lineTo(W, tunnelBot());
-  ctx.stroke();
-
-  // Scrolling grid
-  ctx.globalAlpha = 0.05;
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 0.5;
-  const gridSp = 40;
-  const off = distTravelled % gridSp;
-  for (let x = -off; x < W; x += gridSp) {
-    ctx.beginPath();
-    ctx.moveTo(x, tunnelTop());
-    ctx.lineTo(x, tunnelBot());
-    ctx.stroke();
-  }
-  for (let y = tunnelTop(); y <= tunnelBot(); y += gridSp) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-}
-
-/* ---- Gates ---- */
-function drawGates() {
+function drawGameWorld() {
+  // Flip-lock zones
   for (const g of gates) {
-    if (g.x < -50 || g.x > W + 50) continue;
-    const r = g.radius;
-    const pulseR = r + Math.sin(runTime * 5 + g.x * 0.03) * 2.5;
+    if (g.type === GT.FLIPLOCK && g.flipLockStart > -120) {
+      const lx = g.flipLockStart;
+      const lw = g.x - g.flipLockStart;
+      if (lw > 0 && lx < W + 10) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        const clampedX = Math.max(0, lx);
+        const clampedW = Math.min(lw, W - clampedX + 20);
+        ctx.beginPath();
+        ctx.rect(clampedX, railTop, clampedW, playH);
+        ctx.clip();
+        // Base fill
+        ctx.fillStyle = 'hsla(0,60%,20%,0.25)';
+        ctx.fillRect(clampedX, railTop, clampedW, playH);
+        // Animated diagonal stripes
+        const sw = 14;
+        const soff = (dist * 1.5) % sw;
+        for (let sx = clampedX - playH - soff; sx < clampedX + clampedW + playH; sx += sw) {
+          ctx.fillStyle = 'hsla(0,70%,40%,0.15)';
+          ctx.beginPath();
+          ctx.moveTo(sx, railTop);
+          ctx.lineTo(sx + sw * 0.5, railTop);
+          ctx.lineTo(sx + sw * 0.5 + playH, railBot);
+          ctx.lineTo(sx + playH, railBot);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+        // Border
+        ctx.strokeStyle = 'hsla(0,60%,45%,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(clampedX, railTop, clampedW, playH);
+        ctx.setLineDash([]);
+        // "NO FLIP" label
+        if (clampedW > 50) {
+          ctx.fillStyle = `hsla(0,70%,50%,0.3)`;
+          ctx.font = 'bold 10px "Segoe UI",system-ui,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('NO FLIP', clampedX + clampedW / 2, railTop + playH / 2 + 4);
+        }
+      }
+    }
+  }
 
-    ctx.shadowBlur = 14;
-    if (g.isBank) {
-      ctx.strokeStyle = hsl(50, 100, 60, 0.9);
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = hsl(50, 100, 55);
-      ctx.beginPath();
-      ctx.arc(g.x, g.y, pulseR, 0, Math.PI * 2);
-      ctx.stroke();
-      // Inner double ring
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = hsl(50, 90, 70, 0.5);
-      ctx.beginPath();
-      ctx.arc(g.x, g.y, pulseR * 0.65, 0, Math.PI * 2);
-      ctx.stroke();
-      // $ text
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = hsl(50, 100, 75);
-      ctx.font = 'bold 13px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('$', g.x, g.y);
-    } else {
-      ctx.strokeStyle = hsl(g.hue, 100, 55, 0.8);
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = hsl(g.hue, 100, 55);
-      ctx.beginPath();
-      ctx.arc(g.x, g.y, pulseR, 0, Math.PI * 2);
-      ctx.stroke();
-      // Inner glow ring
-      ctx.strokeStyle = hsl(g.hue, 70, 65, 0.25);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(g.x, g.y, pulseR * 0.55, 0, Math.PI * 2);
-      ctx.stroke();
+  // Gates
+  for (const g of gates) {
+    if (g.x > W + 40) continue;
+    const blocks = getGateBlocks(g);
+    const proximity = clamp(1 - (g.x - orbX) / 280, 0, 1);
+    const bright = 25 + proximity * 30;
+    let gH;
+    if (g.type === GT.FLIPLOCK) gH = 0;
+    else if (g.type === GT.PULSE) gH = 280;
+    else if (g.type === GT.SPLIT) gH = 140;
+    else gH = hue;
+
+    ctx.shadowColor = `hsla(${gH},80%,${bright + 15}%,${0.25 + proximity * 0.4})`;
+    ctx.shadowBlur = 5 + proximity * 10;
+
+    for (const b of blocks) {
+      // Main block
+      ctx.fillStyle = `hsl(${gH},65%,${bright}%)`;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      // Inner bevel
+      ctx.fillStyle = `hsla(${gH},80%,${bright + 20}%,0.25)`;
+      ctx.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4);
+      // Edge highlight
+      ctx.fillStyle = `hsla(${gH},90%,${bright + 30}%,0.15)`;
+      ctx.fillRect(b.x, b.y, b.w, 2);
     }
     ctx.shadowBlur = 0;
-  }
-}
 
-/* ---- Hazards ---- */
-function drawHazards() {
-  for (const h of hazards) {
-    if (h.x < -70 || h.x > W + 70) continue;
-
-    if (h.type === 'laser') {
-      if (!h.active) {
-        // Telegraph
-        const t = 1 - h.telegraph / h.telegraphMax;
-        ctx.globalAlpha = 0.12 + t * 0.35;
-        ctx.fillStyle = hsl(0, 100, 50);
-        ctx.fillRect(h.x - h.w / 2 - 3, h.y, h.w + 6, h.h);
-        // Warning stripes
-        ctx.strokeStyle = hsl(0, 100, 60, 0.5 * t);
-        ctx.lineWidth = 1;
-        const stripeGap = 10;
-        for (let yy = h.y; yy < h.y + h.h; yy += stripeGap) {
-          ctx.beginPath();
-          ctx.moveTo(h.x - h.w / 2 - 5, yy);
-          ctx.lineTo(h.x + h.w / 2 + 5, yy);
-          ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-      } else {
-        // Active laser
-        ctx.shadowColor = '#f00';
-        ctx.shadowBlur = 18;
-        ctx.fillStyle = hsl(0, 100, 55);
-        ctx.fillRect(h.x - h.w / 2, h.y, h.w, h.h);
-        ctx.fillStyle = hsl(0, 80, 85);
-        ctx.fillRect(h.x - 1, h.y, 2, h.h);
-        ctx.shadowBlur = 0;
-      }
-    } else if (h.type === 'crusher') {
-      const topY = tunnelTop();
-      const botY2 = h.botY;
-      const botH = tunnelBot() - botY2;
-      if (!h.active) {
-        const t = 1 - h.telegraph / h.telegraphMax;
-        ctx.globalAlpha = 0.12 + t * 0.35;
-        ctx.fillStyle = hsl(30, 80, 42);
-        ctx.fillRect(h.x - h.w / 2, topY, h.w, h.topH);
-        ctx.fillRect(h.x - h.w / 2, botY2, h.w, botH);
-        // Arrows
-        ctx.fillStyle = hsl(30, 100, 60, t * 0.8);
-        const as = 5;
-        ctx.beginPath();
-        ctx.moveTo(h.x, topY + h.topH + as);
-        ctx.lineTo(h.x - as, topY + h.topH);
-        ctx.lineTo(h.x + as, topY + h.topH);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(h.x, botY2 - as);
-        ctx.lineTo(h.x - as, botY2);
-        ctx.lineTo(h.x + as, botY2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      } else {
-        ctx.shadowColor = hsl(30, 100, 50);
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = hsl(30, 85, 48);
-        ctx.fillRect(h.x - h.w / 2, topY, h.w, h.topH);
-        ctx.fillRect(h.x - h.w / 2, botY2, h.w, botH);
-        // Teeth
-        ctx.fillStyle = hsl(30, 75, 62);
-        const ts = 4;
-        for (let tx = h.x - h.w / 2; tx < h.x + h.w / 2; tx += ts * 2) {
-          ctx.beginPath();
-          ctx.moveTo(tx, topY + h.topH);
-          ctx.lineTo(tx + ts, topY + h.topH + ts);
-          ctx.lineTo(tx + ts * 2, topY + h.topH);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(tx, botY2);
-          ctx.lineTo(tx + ts, botY2 - ts);
-          ctx.lineTo(tx + ts * 2, botY2);
-          ctx.fill();
-        }
-        ctx.shadowBlur = 0;
-      }
+    // Pulse indicator lines
+    if (g.type === GT.PULSE) {
+      const pa = 0.3 + Math.sin(g.pulsePhase) * 0.2;
+      ctx.fillStyle = `hsla(280,80%,60%,${pa})`;
+      ctx.fillRect(g.x - 1, railTop, g.w + 2, 2);
+      ctx.fillRect(g.x - 1, railBot - 2, g.w + 2, 2);
     }
   }
-}
 
-/* ---- Orbs ---- */
-function drawOrbs() {
-  for (const o of orbs) {
-    if (o.x < -20 || o.x > W + 20) continue;
-    const pulse = 1 + Math.sin(o.pulse) * 0.15;
-    const r = o.radius * pulse;
-    // Outer glow
-    ctx.fillStyle = hsl(120, 80, 50, 0.2);
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r + 6, 0, Math.PI * 2);
-    ctx.fill();
-    // Body
-    ctx.shadowColor = hsl(120, 100, 55);
+  // Sparks
+  for (const s of sparks) {
+    if (!s.alive || s.x < -20 || s.x > W + 20) continue;
+    const glow = 0.6 + Math.sin(s.t) * 0.3;
+    const sr = SPARK_R + Math.sin(s.t * 1.3) * 1.5;
+    ctx.shadowColor = `hsla(50,100%,65%,${glow * 0.7})`;
     ctx.shadowBlur = 10;
-    ctx.fillStyle = hsl(120, 100, 58);
+    ctx.fillStyle = `hsla(50,100%,${55 + Math.sin(s.t) * 15}%,${0.85 + glow * 0.15})`;
     ctx.beginPath();
-    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+    ctx.moveTo(s.x, s.y - sr);
+    ctx.lineTo(s.x + sr * 0.65, s.y);
+    ctx.lineTo(s.x, s.y + sr);
+    ctx.lineTo(s.x - sr * 0.65, s.y);
+    ctx.closePath();
     ctx.fill();
-    // Highlight
+    // Inner bright
+    ctx.fillStyle = 'hsla(45,100%,90%,0.5)';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, sr * 0.3, 0, Math.PI * 2);
+    ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.fillStyle = hsl(120, 70, 82);
-    ctx.beginPath();
-    ctx.arc(o.x - 2, o.y - 2, r * 0.35, 0, Math.PI * 2);
-    ctx.fill();
   }
-}
 
-/* ---- Trail ---- */
-function drawTrail() {
-  if (!player || !player.trail) return;
-
-  if (slowmoActive) {
-    // Chromatic aberration
-    for (let i = 0; i < player.trail.length; i++) {
-      const t = player.trail[i];
-      if (t.a <= 0) continue;
-      const a = clamp(t.a, 0, 1) * 0.25;
-      const sz = PLAYER_R * (0.25 + i / player.trail.length * 0.5);
-      ctx.globalAlpha = a;
-      ctx.fillStyle = hsl(0, 100, 60);
-      ctx.beginPath();
-      ctx.arc(t.x - 2, t.y - 1, sz, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = hsl(180, 100, 60);
-      ctx.beginPath();
-      ctx.arc(t.x + 2, t.y + 1, sz, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  // Orb
+  const cg = clamp(combo, 0, 8) / 8;
+  const orbHue = (hue + combo * 25) % 360;
+  ctx.save();
+  ctx.translate(orbX, orbY);
+  if (orbFlipping) {
+    const dir = orbLane === 1 ? -1 : 1;
+    ctx.scale(
+      1 + (orbSquashX - 1) * (1 - orbFlipT),
+      1 + (orbSquashY - 1) * (1 - orbFlipT)
+    );
   } else {
-    for (let i = 0; i < player.trail.length; i++) {
-      const t = player.trail[i];
-      if (t.a <= 0) continue;
-      ctx.globalAlpha = clamp(t.a, 0, 1) * 0.35;
-      ctx.fillStyle = hsl(t.hue, 80, 55);
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, PLAYER_R * (0.25 + i / player.trail.length * 0.4), 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.scale(orbSquashX, orbSquashY);
   }
-  ctx.globalAlpha = 1;
-}
 
-/* ---- Player ---- */
-function drawPlayer() {
-  if (!player) return;
-  ctx.shadowColor = hsl(player.hue, 100, 58);
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = hsl(player.hue, 90, 55);
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, PLAYER_R, 0, Math.PI * 2);
-  ctx.fill();
+  // Combo aura
+  if (combo > 0) {
+    const ar = ORB_R + 5 + cg * 10;
+    const ag = ctx.createRadialGradient(0, 0, ORB_R * 0.4, 0, 0, ar);
+    ag.addColorStop(0, `hsla(${orbHue},100%,70%,${0.15 + cg * 0.35})`);
+    ag.addColorStop(1, `hsla(${orbHue},100%,50%,0)`);
+    ctx.fillStyle = ag;
+    ctx.beginPath(); ctx.arc(0, 0, ar, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Orb body
+  ctx.shadowColor = `hsla(${orbHue},100%,65%,0.7)`;
+  ctx.shadowBlur = 8 + cg * 14;
+  ctx.fillStyle = `hsl(${orbHue},75%,60%)`;
+  ctx.beginPath(); ctx.arc(0, 0, ORB_R, 0, Math.PI * 2); ctx.fill();
+  // Highlight
+  ctx.fillStyle = 'hsla(0,0%,100%,0.35)';
+  ctx.beginPath(); ctx.arc(-2.5, -2.5, ORB_R * 0.4, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = hsl(player.hue, 60, 82);
-  ctx.beginPath();
-  ctx.arc(player.x - 2, player.y - 2, PLAYER_R * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.restore();
+
+  // Particles
+  for (const p of particles) {
+    const a = clamp(p.life / p.maxLife, 0, 1);
+    const s = p.sz * a;
+    ctx.fillStyle = `hsla(${p.hue},80%,60%,${a * 0.8})`;
+    ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
+  }
 }
 
-/* ---- Slow-mo vignette ---- */
-function drawSlowMoFX() {
-  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.18, W / 2, H / 2, H * 0.65);
-  vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(20,0,50,0.35)');
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, W, H);
-}
-
-/* ---- HUD ---- */
 function drawHUD() {
-  const sc = Math.floor(displayScore);
-
   // Score
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 18px monospace';
+  ctx.font = 'bold 20px "Segoe UI",system-ui,sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(sc, 12, 8);
+  ctx.fillText(Math.floor(displayScore), 14, 10);
 
-  // Best
-  ctx.fillStyle = '#556';
-  ctx.font = '11px monospace';
-  ctx.fillText('BEST ' + bestScore, 12, 30);
-
-  // Multiplier
-  const multHue = lerp(180, 300, clamp((multiplier - 1) / 9, 0, 1));
-  ctx.fillStyle = hsl(multHue, 100, 60);
-  ctx.font = 'bold 16px monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText('x' + multiplier, W - 12, 8);
-
-  // Fuel pips
-  const pipY = 30;
-  const pipW = 14, pipH = 7, pipGap = 3;
-  const totalFuelW = MAX_FUEL * (pipW + pipGap) - pipGap;
-  const fuelStartX = W - 12 - totalFuelW;
-
-  for (let i = 0; i < MAX_FUEL; i++) {
-    const px = fuelStartX + i * (pipW + pipGap);
-    ctx.fillStyle = i < Math.floor(fuel) ? hsl(180, 90, 52) : 'rgba(255,255,255,0.12)';
-    ctx.fillRect(px, pipY, pipW, pipH);
-    if (i < Math.floor(fuel)) {
-      ctx.fillStyle = hsl(180, 70, 78);
-      ctx.fillRect(px + 1, pipY + 1, pipW - 2, 2);
-    }
+  // Combo
+  if (comboMult > 1) {
+    ctx.fillStyle = `hsla(50,100%,70%,0.85)`;
+    ctx.font = 'bold 13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(`x${comboMult} COMBO (${combo})`, 14, 34);
+  } else if (combo > 0) {
+    ctx.fillStyle = `hsla(50,100%,60%,0.6)`;
+    ctx.font = '12px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(`streak: ${combo}`, 14, 34);
   }
 
-  // Fractional pip
-  const frac = fuel - Math.floor(fuel);
-  const fi = Math.floor(fuel);
-  if (frac > 0.02 && fi < MAX_FUEL) {
-    const px = fuelStartX + fi * (pipW + pipGap);
-    ctx.fillStyle = hsl(180, 90, 52, frac * 0.8);
-    ctx.fillRect(px, pipY, pipW * frac, pipH);
+  ctx.textBaseline = 'alphabetic';
+
+  // Edge flash
+  if (edgeAlpha > 0) {
+    ctx.fillStyle = `hsla(55,100%,70%,${clamp(edgeAlpha, 0, 1)})`;
+    ctx.font = 'bold 18px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EDGE!', W / 2, H * 0.40);
+  }
+
+  // Speed up flash
+  if (speedFlash > 0) {
+    ctx.fillStyle = `hsla(${hue},80%,65%,${clamp(speedFlash * 0.7, 0, 1)})`;
+    ctx.font = 'bold 20px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SPEED UP!', W / 2, H * 0.5);
   }
 }
 
-/* ---- Start screen ---- */
 function drawStartScreen() {
-  startAnimTime += 0.016;
+  ctx.fillStyle = 'rgba(8,8,22,0.88)';
+  ctx.fillRect(0, 0, W, H);
 
-  // Subtle grid bg
-  ctx.globalAlpha = 0.035;
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 0.5;
-  for (let x = 0; x < W; x += 28) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
-  for (let y = 0; y < H; y += 28) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-
-  // Floating particles (decorative)
-  const t = startAnimTime;
-  for (let i = 0; i < 6; i++) {
-    const px = W * 0.2 + Math.sin(t * 0.7 + i * 1.3) * W * 0.3;
-    const py = H * 0.35 + Math.cos(t * 0.5 + i * 0.9) * H * 0.15;
-    const hueP = (190 + i * 30 + t * 20) % 360;
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = hsl(hueP, 100, 60);
-    ctx.beginPath();
-    ctx.arc(px, py, 3 + Math.sin(t + i) * 1.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center';
 
   // Title
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowColor = hsl(190, 100, 55);
-  ctx.shadowBlur = 25;
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 36px monospace';
+  ctx.shadowColor = `hsla(${hue},100%,60%,0.5)`;
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = `hsl(${hue},75%,68%)`;
+  ctx.font = 'bold 38px "Segoe UI",system-ui,sans-serif';
   ctx.fillText('GRAVITY', W / 2, H * 0.28);
-  ctx.fillStyle = hsl(190, 100, 65);
-  ctx.font = 'bold 38px monospace';
-  ctx.fillText('FLIP', W / 2, H * 0.28 + 42);
+  ctx.fillText('FLIP', W / 2, H * 0.28 + 44);
   ctx.shadowBlur = 0;
 
   // Subtitle
-  ctx.fillStyle = hsl(320, 80, 58);
-  ctx.font = '13px monospace';
-  ctx.fillText('H E A T L I N E', W / 2, H * 0.28 + 78);
+  ctx.fillStyle = 'hsla(0,0%,100%,0.4)';
+  ctx.font = '12px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('C O M B O   G A T E S', W / 2, H * 0.28 + 72);
 
   // Instructions
-  ctx.fillStyle = '#778';
-  ctx.font = '12px monospace';
-  const iy = H * 0.52;
+  ctx.fillStyle = 'hsla(0,0%,100%,0.6)';
+  ctx.font = '13px "Segoe UI",system-ui,sans-serif';
   const lines = [
-    'Tap / Space to flip gravity',
-    'Thread heat gates for combo',
-    'Tap mid-flip for slow-mo (costs fuel)',
-    'Collect green orbs to refuel',
-    'Bank gates ($) cash out your combo'
+    'Tap or press Space to flip gravity',
+    'Navigate through gate openings',
+    'Collect \u2666 sparks for combo multiplier',
+    'Graze gates for EDGE! bonus points',
+    'Watch for NO FLIP zones!'
   ];
-  for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], W / 2, iy + i * 20);
-  }
+  lines.forEach((t, i) => ctx.fillText(t, W / 2, H * 0.48 + i * 22));
 
-  // Tap to start
-  const pulseA = 0.45 + Math.sin(Date.now() / 350) * 0.35;
-  ctx.globalAlpha = clamp(pulseA, 0.1, 0.9);
-  ctx.fillStyle = hsl(190, 100, 68);
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('TAP TO START', W / 2, H * 0.78);
-  ctx.globalAlpha = 1;
-
-  if (bestScore > 0) {
-    ctx.fillStyle = '#445';
-    ctx.font = '12px monospace';
-    ctx.fillText('Best: ' + bestScore, W / 2, H * 0.85);
-  }
-}
-
-/* ---- Game over screen ---- */
-function drawGameOver() {
-  ctx.fillStyle = 'rgba(5,8,18,0.78)';
-  ctx.fillRect(-20, -20, W + 40, H + 40);
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  ctx.shadowColor = hsl(0, 90, 50);
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 30px monospace';
-  ctx.fillText('GAME OVER', W / 2, H * 0.28);
-  ctx.shadowBlur = 0;
-
-  // Score
-  const sc = Math.floor(score);
-  ctx.fillStyle = '#556';
-  ctx.font = '11px monospace';
-  ctx.fillText('SCORE', W / 2, H * 0.39);
-  ctx.fillStyle = hsl(190, 90, 65);
-  ctx.font = 'bold 28px monospace';
-  ctx.fillText(sc, W / 2, H * 0.43 + 4);
+  // Blink tap
+  const blink = 0.4 + Math.sin(Date.now() * 0.004) * 0.4;
+  ctx.fillStyle = `hsla(0,0%,100%,${blink + 0.2})`;
+  ctx.font = 'bold 17px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('TAP TO START', W / 2, H * 0.76);
 
   // Best
-  ctx.fillStyle = '#556';
-  ctx.font = '11px monospace';
-  ctx.fillText('BEST', W / 2, H * 0.53);
+  if (bestScore > 0) {
+    ctx.fillStyle = 'hsla(50,70%,60%,0.6)';
+    ctx.font = '13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('BEST: ' + bestScore, W / 2, H * 0.83);
+  }
+}
+
+function drawGameOverScreen() {
+  ctx.fillStyle = 'rgba(8,8,22,0.82)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = 'hsla(0,75%,55%,0.9)';
+  ctx.font = 'bold 30px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('GAME OVER', W / 2, H * 0.28);
+
+  ctx.fillStyle = 'hsla(0,0%,100%,0.4)';
+  ctx.font = '13px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('SCORE', W / 2, H * 0.35);
+
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 22px monospace';
-  ctx.fillText(bestScore, W / 2, H * 0.57);
+  ctx.font = 'bold 44px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText(score, W / 2, H * 0.44);
 
-  // Max multiplier
-  ctx.fillStyle = hsl(270, 85, 62);
-  ctx.font = 'bold 14px monospace';
-  ctx.fillText('x' + maxMultReached + ' max combo', W / 2, H * 0.66);
+  ctx.fillStyle = 'hsla(50,80%,60%,0.85)';
+  ctx.font = 'bold 20px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('BEST: ' + bestScore, W / 2, H * 0.53);
 
-  // New best indicator
-  if (Math.floor(score) >= bestScore && bestScore > 0) {
-    ctx.fillStyle = hsl(50, 100, 60);
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText('NEW BEST!', W / 2, H * 0.72);
+  if (maxCombo > 1) {
+    ctx.fillStyle = 'hsla(50,90%,65%,0.6)';
+    ctx.font = '14px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('Best Combo: x' + (maxCombo >= 5 ? 3 : maxCombo >= 2 ? 2 : 1) + ' (' + maxCombo + ' sparks)', W / 2, H * 0.60);
   }
 
-  // Tap to retry
-  const pulseA = 0.45 + Math.sin(Date.now() / 350) * 0.35;
-  ctx.globalAlpha = clamp(pulseA, 0.1, 0.9);
-  ctx.fillStyle = hsl(190, 100, 68);
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('TAP TO RETRY', W / 2, H * 0.82);
-  ctx.globalAlpha = 1;
+  const blink = 0.4 + Math.sin(Date.now() * 0.004) * 0.4;
+  ctx.fillStyle = `hsla(0,0%,100%,${blink + 0.2})`;
+  ctx.font = 'bold 17px "Segoe UI",system-ui,sans-serif';
+  ctx.fillText('TAP TO RETRY', W / 2, H * 0.76);
 }
 
-/* ========== Main loop ========== */
-prevTime = performance.now();
-
-function loop(now) {
-  requestAnimationFrame(loop);
-  const rawDt = (now - prevTime) / 1000;
-  prevTime = now;
-  const dt = Math.min(rawDt, 1 / 30);
-
-  if (state === 'playing') {
-    update(dt);
-  }
-  draw();
-}
-
-requestAnimationFrame(loop);
+/* ======== BOOT ======== */
+requestAnimationFrame(frame);
 
 })();
 </script>
