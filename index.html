@@ -5,158 +5,116 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Gravity Flip - Free HTML5 Game</title>
 <meta name="description" content="Play Gravity Flip - Tap to flip gravity up/down while dodging obstacles from both sides. Collect stars for bonus points. Obstacles speed up gradually.">
-<meta name="theme-color" content="#0a0e1a">
-<link rel="canonical" href="https://balinti.github.io/gravity-flip/">
+<meta name="theme-color" content="#0b0f1a">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Gravity Flip - Free HTML5 Game">
-<meta property="og:description" content="Tap to flip gravity in this fast-paced neon runner. Dodge pulse gates, collect charge orbs, and chain combos for massive scores!">
+<meta property="og:description" content="Tap to flip gravity up/down while dodging obstacles. Collect stars for bonus points in this hyper-casual HTML5 game.">
 <meta property="og:url" content="https://balinti.github.io/gravity-flip/">
-<meta property="og:image" content="https://balinti.github.io/gravity-flip/og-image.png">
+<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect fill='%230b0f1a' width='400' height='300'/%3E%3Ctext x='200' y='130' text-anchor='middle' fill='%2300e5ff' font-size='36' font-family='Arial'%3EGravity Flip%3C/text%3E%3Ctext x='200' y='180' text-anchor='middle' fill='%23ff00aa' font-size='18' font-family='Arial'%3EHeatline%3C/text%3E%3Ccircle cx='200' cy='220' r='12' fill='%2300e5ff'/%3E%3C/svg%3E">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gravity Flip - Free HTML5 Game">
-<meta name="twitter:description" content="Tap to flip gravity in this fast-paced neon runner. Dodge pulse gates, collect charge orbs, and chain combos for massive scores!">
-<meta name="twitter:image" content="https://balinti.github.io/gravity-flip/og-image.png">
+<meta name="twitter:description" content="Tap to flip gravity up/down while dodging obstacles. Collect stars for bonus points in this hyper-casual HTML5 game.">
+<meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect fill='%230b0f1a' width='400' height='300'/%3E%3Ctext x='200' y='130' text-anchor='middle' fill='%2300e5ff' font-size='36' font-family='Arial'%3EGravity Flip%3C/text%3E%3Ctext x='200' y='180' text-anchor='middle' fill='%23ff00aa' font-size='18' font-family='Arial'%3EHeatline%3C/text%3E%3Ccircle cx='200' cy='220' r='12' fill='%2300e5ff'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://balinti.github.io/gravity-flip/">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4099346100621490" crossorigin="anonymous"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0e1a;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
-#game-container{position:relative;width:100%;max-width:420px;max-height:750px;aspect-ratio:420/750;background:#0a0e1a;overflow:hidden;border-radius:4px}
-canvas{display:block;width:100%;height:100%}
-#seo-text{position:absolute;bottom:0;left:0;right:0;color:rgba(255,255,255,0.06);font-size:7px;line-height:1.2;padding:2px 6px;pointer-events:none;z-index:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#060a12;font-family:'Segoe UI',Arial,sans-serif;display:grid;place-items:center}
+#wrap{position:relative;width:min(420px,100vw);height:min(750px,100vh);aspect-ratio:420/750;display:flex;flex-direction:column;align-items:center}
+canvas{display:block;width:100%;flex:1;border-radius:8px;touch-action:none}
+#footer{width:100%;padding:6px 12px;text-align:center;font-size:11px;color:#445;line-height:1.6}
+#footer a{color:#556;text-decoration:none;margin:0 6px}
+#footer a:hover{color:#88a}
 </style>
 </head>
 <body>
-<div id="game-container">
-<canvas id="gc"></canvas>
-<div id="seo-text">Gravity Flip: Pulse Gates - A hyper-casual HTML5 game. Tap or press Space to flip gravity between floor and ceiling rails. Navigate through pulse gates with color-coded safe zones. Cyan gates are safe at top, magenta at bottom, yellow require center passage. Collect charge orbs for combo shields and score multipliers. Chain near-miss passes for massive combo scores. Free to play in any browser.</div>
+<div id="wrap">
+<canvas id="c"></canvas>
+<div id="footer">
+<a href="#">How to Play</a> | <a href="#">Privacy</a> | <a href="#">Contact</a><br>
+Gravity Flip &copy; 2026 &mdash; A free hyper-casual HTML5 game. Flip gravity to dodge hazards and thread heat gates.
 </div>
-
+</div>
 <script>
 'use strict';
 (()=>{
 
-/* ═══════════════════════════════════════
-   GRAVITY FLIP: PULSE GATES
-   Hyper-casual HTML5 Canvas game
-   ═══════════════════════════════════════ */
-
-// --- Canvas Setup ---
-const canvas = document.getElementById('gc');
+const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const container = document.getElementById('game-container');
+const DPR = Math.min(2, devicePixelRatio || 1);
+const LS_KEY = 'gravityflip_highscore_v1';
+const LS_MULT_KEY = 'gravityflip_bestmult_v1';
 
-let W, H, DPR;
-
+/* ========== Canvas sizing ========== */
+let W, H;
 function resize() {
-  const rect = container.getBoundingClientRect();
-  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  const rect = canvas.getBoundingClientRect();
   W = rect.width;
   H = rect.height;
   canvas.width = W * DPR;
   canvas.height = H * DPR;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
-window.addEventListener('resize', resize);
 resize();
+window.addEventListener('resize', resize);
 
-// --- Constants ---
-const RAIL_MARGIN = 55;
-const PLAYER_R = 11;
-const GRAVITY_ACCEL = 2600;
-const FLIP_IMPULSE = 580;
-const BASE_SPEED = 135;
-const MAX_SPEED = 310;
-const GATE_W = 16;
-const GAP_BIG = 105;
-const GAP_SMALL = 68;
-const MIN_SPACING = 175;
-const COYOTE = 0.045; // seconds of collision grace
-const ORB_R = 9;
-const NEAR_MISS_MARGIN = 16;
-const LS_KEY = 'gravityFlipHighScore';
+/* ========== Constants ========== */
+const TUNNEL_PAD = 34;
+const PLAYER_R = 10;
+const FLIP_DUR = 0.15;
+const SLOWMO_DUR = 0.6;
+const SLOWMO_SCALE = 0.35;
+const MAX_FUEL = 3;
+const BANK_INTERVAL_MIN = 8;
+const BANK_INTERVAL_MAX = 12;
+const FREEZE_DUR_MIN = 0.08;
+const FREEZE_DUR_MAX = 0.12;
 
-// --- State ---
+/* ========== Game state ========== */
 let state = 'start';
-let score = 0;
-let best = parseInt(localStorage.getItem(LS_KEY)) || 0;
-let combo = 0;
-let comboMult = 1;
-let orbShield = false;
-let elapsed = 0;
-let scrollSpd = BASE_SPEED;
-let screenShake = 0;
-let slowMo = 0;
-let deathFlash = 0;
-let hueShift = 0;
-let railTop, railBot;
+let score, displayScore, bestScore, bestMult;
+let multiplier, maxMultReached;
+let fuel;
+let runTime, speed;
+let player;
+let gates, hazards, orbs, particles;
+let timeScale, slowmoTimer, slowmoActive;
+let freezeTimer;
+let shakeX, shakeY, shakeMag, shakeTimer;
+let nextBankDist, distTravelled;
+let lastHazardX;
+let tunnelHue;
+let prevTime;
+let startAnimTime = 0;
 
-// Player
-const player = { x: 0, y: 0, vy: 0, grav: 1, onRail: true };
+bestScore = parseInt(localStorage.getItem(LS_KEY)) || 0;
+bestMult = parseInt(localStorage.getItem(LS_MULT_KEY)) || 0;
 
-// Collections
-let gates = [];
-let orbs = [];
-let particles = [];
-let speedLines = [];
-let lastGateX = 0;
-let lastSafe = 'top';
-let gateNum = 0;
-
-// --- WebAudio (optional, muted until first interaction) ---
-let audioCtx = null;
-let audioReady = false;
-
-function initAudio() {
-  if (audioCtx) return;
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioReady = true;
-  } catch(e) { audioReady = false; }
-}
-
-function tone(freq, dur, type, vol) {
-  if (!audioReady || !audioCtx) return;
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type || 'sine';
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(vol || 0.07, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    o.connect(g).connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + dur);
-  } catch(e) {}
-}
-
-function sfxFlip()     { tone(440, 0.07, 'sine', 0.05); }
-function sfxPass()     { tone(620, 0.1, 'triangle', 0.04); }
-function sfxNearMiss() { tone(880, 0.14, 'sine', 0.06); tone(1100, 0.1, 'sine', 0.04); }
-function sfxOrb()      { tone(1200, 0.18, 'sine', 0.08); tone(1500, 0.12, 'triangle', 0.05); }
-function sfxDeath()    { tone(110, 0.35, 'sawtooth', 0.12); tone(80, 0.45, 'square', 0.07); }
-
-// --- Utility ---
+/* ========== Utility ========== */
 function lerp(a, b, t) { return a + (b - a) * t; }
-function rand(a, b) { return Math.random() * (b - a) + a; }
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+function clamp(v, mn, mx) { return v < mn ? mn : v > mx ? mx : v; }
+function rand(a, b) { return a + Math.random() * (b - a); }
+function hsl(h, s, l, a) {
+  return a !== undefined
+    ? `hsla(${((h % 360) + 360) % 360},${s}%,${l}%,${a})`
+    : `hsl(${((h % 360) + 360) % 360},${s}%,${l}%)`;
+}
+function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 
-// --- Particle System (capped for performance) ---
-const MAX_PARTICLES = 100;
-
-function emitP(x, y, n, color, speed, life) {
-  for (let i = 0; i < n && particles.length < MAX_PARTICLES; i++) {
-    const a = Math.random() * 6.2832;
-    const s = rand(speed * 0.25, speed);
+/* ========== Particles ========== */
+function spawnParticles(x, y, count, hue, spdMin, spdMax, life, sMin, sMax) {
+  for (let i = 0; i < count; i++) {
+    const a = rand(0, Math.PI * 2);
+    const spd = rand(spdMin, spdMax);
     particles.push({
       x, y,
-      vx: Math.cos(a) * s,
-      vy: Math.sin(a) * s,
-      life: rand(life * 0.5, life),
-      maxLife: life,
-      color,
-      sz: rand(1.5, 3.5)
+      vx: Math.cos(a) * spd,
+      vy: Math.sin(a) * spd,
+      life, maxLife: life,
+      size: rand(sMin || 2, sMax || 5),
+      hue: hue + rand(-20, 20),
+      sat: rand(80, 100),
+      lit: rand(50, 70)
     });
   }
 }
@@ -166,7 +124,7 @@ function updateParticles(dt) {
     const p = particles[i];
     p.x += p.vx * dt;
     p.y += p.vy * dt;
-    p.vy += 40 * dt; // slight gravity on particles
+    p.vy += 350 * dt;
     p.life -= dt;
     if (p.life <= 0) particles.splice(i, 1);
   }
@@ -176,414 +134,453 @@ function drawParticles() {
   for (const p of particles) {
     const a = clamp(p.life / p.maxLife, 0, 1);
     ctx.globalAlpha = a;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.sz * 0.5, p.y - p.sz * 0.5, p.sz, p.sz);
-  }
-  ctx.globalAlpha = 1;
-}
-
-// --- Speed Lines ---
-function updateSpeedLines(dt) {
-  for (let i = speedLines.length - 1; i >= 0; i--) {
-    speedLines[i].x -= speedLines[i].spd * dt;
-    if (speedLines[i].x + speedLines[i].len < 0) speedLines.splice(i, 1);
-  }
-  if (speedLines.length < 15 && Math.random() < dt * scrollSpd * 0.04) {
-    speedLines.push({
-      x: W + 5,
-      y: rand(railTop + 10, railBot - 10),
-      len: rand(12, 40),
-      spd: rand(scrollSpd * 1.4, scrollSpd * 2.2),
-      alpha: rand(0.03, 0.1)
-    });
-  }
-}
-
-function drawSpeedLines() {
-  ctx.lineWidth = 1;
-  for (const l of speedLines) {
-    ctx.globalAlpha = l.alpha;
-    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = hsl(p.hue, p.sat, p.lit);
     ctx.beginPath();
-    ctx.moveTo(l.x, l.y);
-    ctx.lineTo(l.x + l.len, l.y);
-    ctx.stroke();
+    ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
 }
 
-// --- Gate color language ---
-// Cyan = top safe, Magenta = bottom safe, Yellow = center-only
-function gateHSL(type) {
-  if (type === 'top')    return [185, 100, 55];
-  if (type === 'bottom') return [300, 100, 60];
-  return [50, 100, 55]; // center
-}
+/* ========== Tunnel helpers ========== */
+const tunnelTop = () => TUNNEL_PAD;
+const tunnelBot = () => H - TUNNEL_PAD;
+const tunnelH = () => H - TUNNEL_PAD * 2;
 
-function gateCSS(type) {
-  const [h, s, l] = gateHSL(type);
-  return `hsl(${h},${s}%,${l}%)`;
-}
-
-// --- Gate creation ---
-function makeGate(x, safeType, gapSize) {
-  const tunnelH = railBot - railTop;
-  let gapY;
-  if (safeType === 'top') {
-    gapY = railTop + gapSize * 0.5 + 10;
-  } else if (safeType === 'bottom') {
-    gapY = railBot - gapSize * 0.5 - 10;
-  } else {
-    gapY = (railTop + railBot) * 0.5;
-  }
+/* ========== Player factory ========== */
+function createPlayer() {
   return {
-    x, w: GATE_W, safeType, gapSize, gapY,
-    passed: false, scored: false
+    x: W * 0.18,
+    y: H * 0.5,
+    vy: 0,
+    onGround: true,
+    flipping: false,
+    flipTimer: 0,
+    flipFrom: 0,
+    flipTo: 0,
+    hue: 180,
+    trail: []
   };
 }
 
-// --- Spawner logic ---
-function gapSize() {
-  if (elapsed < 10)  return GAP_BIG;
-  if (elapsed < 25)  return lerp(GAP_BIG, GAP_BIG * 0.85, (elapsed - 10) / 15);
-  if (elapsed < 45)  return lerp(GAP_BIG * 0.85, GAP_SMALL + 12, (elapsed - 25) / 20);
-  return lerp(GAP_SMALL + 12, GAP_SMALL, clamp((elapsed - 45) / 40, 0, 1));
+/* ========== Difficulty curve ========== */
+function diff() {
+  const t = runTime;
+  return {
+    speed: 180 + t * 3.0,
+    gateRadius: clamp(28 - t * 0.16, 14, 28),
+    gateSpacing: clamp(210 - t * 1.2, 120, 210),
+    crushGap: clamp(88 - t * 0.55, 44, 88),
+    hazardProb: clamp(0.013 + t * 0.0004, 0.013, 0.05),
+    telegraphTime: clamp(1.2 - t * 0.007, 0.5, 1.2),
+    laserProb: clamp(0.32 + t * 0.003, 0.32, 0.58),
+    driftAmp: clamp(4 + t * 0.12, 4, 16)
+  };
 }
 
-function spacing() {
-  const extra = elapsed < 10 ? 75 : elapsed < 25 ? 50 : elapsed < 45 ? 28 : 12;
-  return MIN_SPACING + rand(0, extra);
-}
-
-function pickSafe() {
-  // Phase-based selection with fairness rules
-  if (elapsed < 10) {
-    // Only top/bottom alternating
-    return lastSafe === 'top' ? 'bottom' : 'top';
-  }
-  if (elapsed < 25) {
-    // Introduce center occasionally
-    if (Math.random() < 0.18 && lastSafe !== 'center') return 'center';
-    return lastSafe === 'top' ? 'bottom' : 'top';
-  }
-  // 25s+: full mix, never center after center
-  if (lastSafe === 'center') {
-    return Math.random() < 0.5 ? 'top' : 'bottom';
-  }
-  const r = Math.random();
-  if (r < 0.22) return 'center';
-  if (lastSafe === 'top') return Math.random() < 0.65 ? 'bottom' : 'top';
-  return Math.random() < 0.65 ? 'top' : 'bottom';
-}
-
-function spawnGates() {
-  const edge = W + 60;
-  while (lastGateX < edge + 350) {
-    const sp = spacing();
-    lastGateX += sp;
-    const safe = pickSafe();
-    const gap = gapSize();
-    gates.push(makeGate(lastGateX, safe, gap));
-    lastSafe = safe;
-    gateNum++;
-
-    // Orb at center line between gates (after 10s, 28% chance)
-    if (elapsed > 10 && Math.random() < 0.28) {
-      orbs.push({
-        x: lastGateX - sp * 0.5,
-        y: (railTop + railBot) * 0.5,
-        alive: true,
-        pulse: rand(0, 6.28)
-      });
-    }
-  }
-}
-
-// --- Initialize a round ---
-function initRound() {
-  railTop = RAIL_MARGIN;
-  railBot = H - RAIL_MARGIN;
-
-  player.x = W * 0.2;
-  player.y = railBot - PLAYER_R;
-  player.vy = 0;
-  player.grav = 1; // 1 = down, -1 = up
-  player.onRail = true;
-
+/* ========== Init run ========== */
+function initRun() {
+  score = 0;
+  displayScore = 0;
+  multiplier = 1;
+  maxMultReached = 1;
+  fuel = 1;
+  runTime = 0;
+  speed = 180;
+  player = createPlayer();
   gates = [];
+  hazards = [];
   orbs = [];
   particles = [];
-  speedLines = [];
+  timeScale = 1;
+  slowmoTimer = 0;
+  slowmoActive = false;
+  freezeTimer = 0;
+  shakeX = 0;
+  shakeY = 0;
+  shakeMag = 0;
+  shakeTimer = 0;
+  distTravelled = 0;
+  nextBankDist = rand(BANK_INTERVAL_MIN, BANK_INTERVAL_MAX) * 180;
+  lastHazardX = W + 300;
+  tunnelHue = 200;
 
-  score = 0;
-  combo = 0;
-  comboMult = 1;
-  orbShield = false;
-  elapsed = 0;
-  scrollSpd = BASE_SPEED;
-  screenShake = 0;
-  slowMo = 0;
-  deathFlash = 0;
-  hueShift = 0;
-  lastGateX = W * 0.55;
-  lastSafe = 'top';
-  gateNum = 0;
-
-  spawnGates();
-}
-
-// --- Flip gravity ---
-function flipGravity() {
-  if (state !== 'playing') return;
-  player.grav *= -1;
-  player.onRail = false;
-  player.vy = -player.grav * FLIP_IMPULSE;
-  sfxFlip();
-  const col = player.grav > 0 ? 'hsl(185,100%,70%)' : 'hsl(300,100%,70%)';
-  emitP(player.x, player.y, 4, col, 70, 0.25);
-}
-
-// --- Input ---
-function handleInput(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  initAudio();
-  if (state === 'start') {
-    state = 'playing';
-    initRound();
-    return;
-  }
-  if (state === 'gameover') {
-    state = 'playing';
-    initRound();
-    return;
-  }
-  if (state === 'playing') {
-    flipGravity();
+  // Seed initial gates
+  for (let x = W + 80; x < W + 650; x += rand(130, 190)) {
+    spawnGate(x, false);
   }
 }
 
-canvas.addEventListener('pointerdown', handleInput);
-document.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' || e.code === 'Enter') {
-    handleInput(e);
-  }
-});
+/* ========== Gate spawning ========== */
+function spawnGate(x, isBank) {
+  const d = diff();
+  const margin = 42;
+  const yy = rand(tunnelTop() + margin, tunnelBot() - margin);
+  gates.push({
+    x, y: yy,
+    radius: isBank ? 30 : d.gateRadius,
+    isBank,
+    passed: false,
+    hue: isBank ? 50 : rand(160, 300)
+  });
+}
 
-// --- Collision: circle vs rect ---
-function circRect(cx, cy, cr, rx, ry, rw, rh) {
+/* ========== Hazard spawning ========== */
+function spawnLaser(x) {
+  const d = diff();
+  const fromTop = Math.random() < 0.5;
+  const len = rand(tunnelH() * 0.3, tunnelH() * 0.52);
+  hazards.push({
+    type: 'laser',
+    x, y: fromTop ? tunnelTop() : tunnelBot() - len,
+    w: 6, h: len,
+    telegraph: d.telegraphTime,
+    telegraphMax: d.telegraphTime,
+    active: false,
+    nearMissed: false,
+    hue: 0
+  });
+}
+
+function spawnCrusher(x) {
+  const d = diff();
+  const gap = d.crushGap;
+  const topH = rand(22, tunnelH() - gap - 22);
+  hazards.push({
+    type: 'crusher',
+    x, w: 28,
+    topH,
+    botY: tunnelTop() + topH + gap,
+    gap,
+    telegraph: d.telegraphTime,
+    telegraphMax: d.telegraphTime,
+    active: false,
+    nearMissed: false,
+    hue: 30
+  });
+}
+
+/* ========== Fuel Orb spawning ========== */
+function spawnOrb(x) {
+  const y = rand(tunnelTop() + 30, tunnelBot() - 30);
+  orbs.push({ x, y, radius: 8, collected: false, hue: 120, pulse: 0 });
+}
+
+/* ========== Collision ========== */
+function circleAABB(cx, cy, cr, rx, ry, rw, rh) {
   const nx = clamp(cx, rx, rx + rw);
   const ny = clamp(cy, ry, ry + rh);
   const dx = cx - nx, dy = cy - ny;
   return dx * dx + dy * dy < cr * cr;
 }
 
-function hitGate(g) {
-  const gt = g.gapY - g.gapSize * 0.5;
-  const gb = g.gapY + g.gapSize * 0.5;
-  const pr = PLAYER_R - 1.5; // tiny forgiveness (coyote)
-  // Upper barrier
-  if (circRect(player.x, player.y, pr, g.x, railTop, g.w, gt - railTop)) return true;
-  // Lower barrier
-  if (circRect(player.x, player.y, pr, g.x, gb, g.w, railBot - gb)) return true;
-  return false;
+function dist2d(x1, y1, x2, y2) {
+  const dx = x1 - x2, dy = y1 - y2;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
-// --- Near-miss detection ---
-function isNearMiss(g) {
-  const gt = g.gapY - g.gapSize * 0.5;
-  const gb = g.gapY + g.gapSize * 0.5;
-  const dTop = Math.abs(player.y - gt);
-  const dBot = Math.abs(player.y - gb);
-  if (Math.min(dTop, dBot) < NEAR_MISS_MARGIN) return true;
-  // Center gate: reward being near center
-  if (g.safeType === 'center' && Math.abs(player.y - g.gapY) < 18) return true;
-  return false;
+/* ========== Screen shake ========== */
+function triggerShake(mag, dur) {
+  shakeMag = mag;
+  shakeTimer = dur;
 }
 
-// --- Death ---
-function die() {
-  state = 'gameover';
-  if (score > best) {
-    best = score;
-    localStorage.setItem(LS_KEY, best.toString());
+/* ========== Input ========== */
+function handleInput() {
+  if (state === 'start') {
+    state = 'playing';
+    initRun();
+    return;
   }
-  screenShake = 0.4;
-  slowMo = 0.25;
-  deathFlash = 0.12;
-  sfxDeath();
-  emitP(player.x, player.y, 28, '#ff4444', 190, 0.55);
-  emitP(player.x, player.y, 14, '#ffaa00', 140, 0.45);
-  emitP(player.x, player.y, 8, '#ffffff', 160, 0.35);
+  if (state === 'gameover') {
+    state = 'playing';
+    initRun();
+    return;
+  }
+  if (state === 'playing') {
+    if (player.flipping) {
+      // Mid-flip: slow-mo if fuel available
+      if (fuel >= 1 && !slowmoActive) {
+        fuel--;
+        slowmoActive = true;
+        slowmoTimer = SLOWMO_DUR;
+        timeScale = SLOWMO_SCALE;
+        spawnParticles(player.x, player.y, 8, 280, 40, 100, 0.4, 2, 4);
+      }
+      return;
+    }
+    // Start flip
+    player.flipping = true;
+    player.flipTimer = 0;
+    player.flipFrom = player.y;
+    if (player.onGround) {
+      player.flipTo = tunnelTop() + PLAYER_R + 2;
+    } else {
+      player.flipTo = tunnelBot() - PLAYER_R - 2;
+    }
+    player.onGround = !player.onGround;
+    player.vy = 0;
+    spawnParticles(player.x, player.y, 12, player.hue, 60, 180, 0.35, 2, 5);
+  }
 }
 
-// --- Update ---
-let lastT = 0;
+canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); handleInput(); });
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); handleInput(); }
+});
 
+/* ========== Update ========== */
 function update(dt) {
-  // Particles & shake always update
-  updateParticles(dt);
-  if (screenShake > 0) screenShake = Math.max(0, screenShake - dt * 2.5);
-  if (deathFlash > 0) deathFlash -= dt;
+  if (freezeTimer > 0) { freezeTimer -= dt; return; }
 
-  if (state !== 'playing') return;
+  const gdt = dt * timeScale;
+  runTime += gdt;
+  const d = diff();
+  speed = d.speed;
 
-  // Slow-mo
-  let eDt = dt;
-  if (slowMo > 0) { eDt *= 0.3; slowMo -= dt; }
-
-  elapsed += eDt;
-  hueShift = (elapsed * 7 + combo * 4) % 360;
-
-  // Speed ramp
-  scrollSpd = lerp(BASE_SPEED, MAX_SPEED, clamp(elapsed / 100, 0, 1));
-
-  // --- Player physics ---
-  if (!player.onRail) {
-    player.vy += player.grav * GRAVITY_ACCEL * eDt;
-    player.y += player.vy * eDt;
-    // Clamp to rails
-    if (player.grav > 0 && player.y >= railBot - PLAYER_R) {
-      player.y = railBot - PLAYER_R;
-      player.vy = 0;
-      player.onRail = true;
+  // Slow-mo countdown
+  if (slowmoActive) {
+    slowmoTimer -= dt;
+    if (slowmoTimer <= 0) {
+      slowmoActive = false;
+      timeScale = 1;
     }
-    if (player.grav < 0 && player.y <= railTop + PLAYER_R) {
-      player.y = railTop + PLAYER_R;
-      player.vy = 0;
-      player.onRail = true;
+  }
+
+  // Shake
+  if (shakeTimer > 0) {
+    shakeTimer -= dt;
+    shakeX = (Math.random() - 0.5) * shakeMag * 2;
+    shakeY = (Math.random() - 0.5) * shakeMag * 2;
+    shakeMag *= 0.9;
+  } else {
+    shakeX = 0;
+    shakeY = 0;
+  }
+
+  // Hue cycling
+  player.hue = (player.hue + 55 * gdt) % 360;
+  tunnelHue = (tunnelHue + 12 * gdt) % 360;
+
+  // Player flip / position
+  if (player.flipping) {
+    player.flipTimer += gdt;
+    const t = clamp(player.flipTimer / FLIP_DUR, 0, 1);
+    player.y = lerp(player.flipFrom, player.flipTo, easeInOutQuad(t));
+    if (t >= 1) {
+      player.flipping = false;
+      player.y = player.flipTo;
     }
   } else {
-    player.y = player.grav > 0 ? railBot - PLAYER_R : railTop + PLAYER_R;
+    const driftAmp = d.driftAmp;
+    const target = player.onGround ? tunnelBot() - PLAYER_R - 2 : tunnelTop() + PLAYER_R + 2;
+    const drift = Math.sin(runTime * 2.5) * driftAmp * 0.12;
+    player.y = lerp(player.y, target + drift, 8 * gdt);
   }
 
-  // --- Scroll ---
-  const dx = scrollSpd * eDt;
+  // Trail
+  player.trail.push({ x: player.x, y: player.y, a: 1, hue: player.hue });
+  if (player.trail.length > 24) player.trail.shift();
+  for (const tr of player.trail) tr.a -= 2.5 * gdt;
 
-  for (let i = gates.length - 1; i >= 0; i--) {
-    gates[i].x -= dx;
-    if (gates[i].x + gates[i].w < -30) gates.splice(i, 1);
+  // Distance
+  const moveDist = speed * gdt;
+  distTravelled += moveDist;
+
+  // Score tick
+  score += speed * gdt * 0.02 * multiplier;
+  displayScore = lerp(displayScore, score, 6 * dt);
+
+  // Move entities left
+  for (const g of gates) g.x -= moveDist;
+  for (const h of hazards) h.x -= moveDist;
+  for (const o of orbs) o.x -= moveDist;
+
+  // Spawn gates
+  let rightmostGate = 0;
+  for (const g of gates) if (g.x > rightmostGate) rightmostGate = g.x;
+  if (rightmostGate < W + 80) {
+    const spacing = rand(d.gateSpacing, d.gateSpacing + 50);
+    const nx = rightmostGate + spacing;
+    if (distTravelled >= nextBankDist) {
+      spawnGate(nx, true);
+      nextBankDist = distTravelled + rand(BANK_INTERVAL_MIN, BANK_INTERVAL_MAX) * speed;
+    } else {
+      spawnGate(nx, false);
+    }
   }
-  for (let i = orbs.length - 1; i >= 0; i--) {
-    orbs[i].x -= dx;
-    orbs[i].pulse += eDt * 3.5;
-    if (orbs[i].x < -30) orbs.splice(i, 1);
+
+  // Spawn hazards with fairness
+  const minLeadDist = player.x + speed * 0.85;
+  const minSpacing = speed * 0.55;
+  if (Math.random() < d.hazardProb * gdt * 60) {
+    const hx = W + rand(50, 140);
+    if (hx >= minLeadDist && hx - lastHazardX >= minSpacing) {
+      let safeToSpawn = true;
+      for (const g of gates) {
+        if (Math.abs(g.x - hx) < 55) { safeToSpawn = false; break; }
+      }
+      if (safeToSpawn) {
+        if (Math.random() < d.laserProb) spawnLaser(hx);
+        else spawnCrusher(hx);
+        lastHazardX = hx;
+      }
+    }
   }
-  lastGateX -= dx;
-  spawnGates();
-  updateSpeedLines(eDt);
 
-  // --- Gate collision & scoring ---
-  for (const g of gates) {
-    const overX = player.x + PLAYER_R > g.x && player.x - PLAYER_R < g.x + g.w;
+  // Spawn orbs
+  if (Math.random() < 0.005 * gdt * 60) {
+    const ox = W + rand(60, 150);
+    let safe = true;
+    for (const h of hazards) { if (Math.abs(h.x - ox) < 40) { safe = false; break; } }
+    if (safe) spawnOrb(ox);
+  }
 
-    if (overX && !g.passed) {
-      if (hitGate(g)) {
-        if (orbShield) {
-          // Shield absorbs
-          orbShield = false;
-          g.passed = true;
-          g.scored = true;
-          emitP(player.x, player.y, 10, '#00ffff', 110, 0.3);
-          screenShake = 0.08;
-          sfxPass();
-        } else {
-          die();
-          return;
+  // Update hazards
+  for (let i = hazards.length - 1; i >= 0; i--) {
+    const h = hazards[i];
+    if (h.telegraph > 0) {
+      h.telegraph -= gdt;
+      if (h.telegraph <= 0) h.active = true;
+    }
+    if (h.x < -70) { hazards.splice(i, 1); continue; }
+    if (!h.active) continue;
+
+    let hit = false;
+    if (h.type === 'laser') {
+      hit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, h.y, h.w, h.h);
+      if (!hit && !h.nearMissed) {
+        const expanded = 14;
+        if (circleAABB(player.x, player.y, PLAYER_R + expanded, h.x - h.w / 2, h.y, h.w, h.h)) {
+          h.nearMissed = true;
+          score += 15 * multiplier;
+          fuel = Math.min(MAX_FUEL, fuel + 0.25);
+          spawnParticles(player.x, player.y, 6, 60, 30, 80, 0.3, 1, 3);
+          triggerShake(2, 0.1);
+        }
+      }
+    } else if (h.type === 'crusher') {
+      const topHit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, tunnelTop(), h.w, h.topH);
+      const botHit = circleAABB(player.x, player.y, PLAYER_R - 1, h.x - h.w / 2, h.botY, h.w, tunnelBot() - h.botY);
+      hit = topHit || botHit;
+      if (!hit && !h.nearMissed) {
+        const inXRange = player.x > h.x - h.w / 2 - PLAYER_R - 10 && player.x < h.x + h.w / 2 + PLAYER_R + 10;
+        if (inXRange && player.y > tunnelTop() + h.topH - 6 && player.y < h.botY + 6) {
+          h.nearMissed = true;
+          score += 15 * multiplier;
+          fuel = Math.min(MAX_FUEL, fuel + 0.25);
+          spawnParticles(player.x, player.y, 6, 60, 30, 80, 0.3, 1, 3);
+          triggerShake(2, 0.1);
         }
       }
     }
 
-    // Gate cleared
-    if (!g.scored && g.x + g.w < player.x - PLAYER_R) {
+    if (hit) { die(); return; }
+  }
+
+  // Gate collision
+  for (let i = gates.length - 1; i >= 0; i--) {
+    const g = gates[i];
+    if (g.x < -60) { gates.splice(i, 1); continue; }
+    if (g.passed) continue;
+    if (g.x < player.x) {
       g.passed = true;
-      g.scored = true;
-      sfxPass();
-
-      const near = isNearMiss(g);
-      const centerBonus = g.safeType === 'center' && Math.abs(player.y - g.gapY) < 22;
-
-      if (near || centerBonus) {
-        // Good pass: combo grows
-        combo++;
-        comboMult = 1 + Math.floor(combo / 3) * 0.5;
-        const bonus = centerBonus ? 15 : 8;
-        score += Math.round((10 + bonus) * comboMult);
-        sfxNearMiss();
-        const col = gateCSS(g.safeType);
-        emitP(g.x + g.w, g.gapY, 8, col, 90, 0.3);
-        emitP(g.x + g.w, g.gapY, 3, '#fff', 60, 0.2);
-        screenShake = 0.04;
+      const dd = dist2d(player.x, player.y, g.x, g.y);
+      if (g.isBank) {
+        const bonus = Math.floor(multiplier * 50);
+        score += bonus;
+        spawnParticles(g.x, g.y, 22, 50, 80, 200, 0.5, 3, 7);
+        triggerShake(4, 0.15);
+        multiplier = 1;
       } else {
-        // Sloppy pass: combo resets
-        combo = 0;
-        comboMult = 1;
-        score += 10;
-        emitP(g.x + g.w, player.y, 2, '#888', 30, 0.15);
+        if (dd < g.radius * 0.75) {
+          multiplier = Math.min(10, multiplier + 1);
+          maxMultReached = Math.max(maxMultReached, multiplier);
+          spawnParticles(g.x, g.y, 16, g.hue, 60, 150, 0.4, 2, 5);
+          score += 25 * multiplier;
+        } else if (dd < g.radius * 1.4) {
+          score += 5;
+          spawnParticles(g.x, g.y, 5, g.hue, 30, 60, 0.25, 1, 3);
+        } else {
+          if (multiplier > 1) {
+            spawnParticles(g.x, g.y, 10, 0, 40, 100, 0.35, 2, 4);
+          }
+          multiplier = 1;
+        }
       }
     }
   }
 
-  // --- Orb collection ---
-  for (const orb of orbs) {
-    if (!orb.alive) continue;
-    const ox = player.x - orb.x, oy = player.y - orb.y;
-    if (ox * ox + oy * oy < (PLAYER_R + ORB_R + 3) * (PLAYER_R + ORB_R + 3)) {
-      orb.alive = false;
-      orbShield = true;
-      score += Math.round(25 * comboMult);
-      combo += 2;
-      comboMult = 1 + Math.floor(combo / 3) * 0.5;
-      sfxOrb();
-      emitP(orb.x, orb.y, 14, '#ffff00', 120, 0.4);
-      emitP(orb.x, orb.y, 7, '#00ffff', 90, 0.3);
-      screenShake = 0.07;
+  // Orb collision
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    const o = orbs[i];
+    o.pulse += gdt * 4;
+    if (o.x < -30) { orbs.splice(i, 1); continue; }
+    if (!o.collected && dist2d(player.x, player.y, o.x, o.y) < PLAYER_R + o.radius) {
+      o.collected = true;
+      fuel = Math.min(MAX_FUEL, fuel + 1);
+      spawnParticles(o.x, o.y, 10, 120, 50, 120, 0.35, 2, 5);
+      orbs.splice(i, 1);
     }
   }
 
-  // --- Player trail ---
-  if (Math.random() < 0.4) {
-    const th = player.grav > 0 ? 185 : 300;
-    emitP(player.x - 7, player.y, 1, `hsl(${th + hueShift * 0.1|0},70%,55%)`, 18, 0.2);
+  // Tunnel wall collision
+  if (player.y - PLAYER_R < tunnelTop() + 1 || player.y + PLAYER_R > tunnelBot() - 1) {
+    die();
+    return;
+  }
+
+  updateParticles(gdt);
+}
+
+/* ========== Die ========== */
+function die() {
+  state = 'gameover';
+  spawnParticles(player.x, player.y, 45, player.hue, 80, 300, 0.7, 3, 8);
+  spawnParticles(player.x, player.y, 25, 0, 60, 220, 0.5, 2, 6);
+  triggerShake(14, 0.45);
+  freezeTimer = rand(FREEZE_DUR_MIN, FREEZE_DUR_MAX);
+
+  const finalScore = Math.floor(score);
+  if (finalScore > bestScore) {
+    bestScore = finalScore;
+    localStorage.setItem(LS_KEY, bestScore);
+  }
+  if (maxMultReached > bestMult) {
+    bestMult = maxMultReached;
+    localStorage.setItem(LS_MULT_KEY, bestMult);
   }
 }
 
-// --- Draw ---
+/* ========== Drawing ========== */
 function draw() {
   ctx.save();
+  ctx.translate(shakeX, shakeY);
 
-  // Screen shake offset
-  if (screenShake > 0) {
-    ctx.translate(rand(-screenShake * 7, screenShake * 7), rand(-screenShake * 7, screenShake * 7));
-  }
-
-  // Background gradient
-  const bgH = (210 + hueShift * 0.25) % 360;
+  // Background
   const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, `hsl(${bgH},30%,5%)`);
-  bg.addColorStop(0.5, `hsl(${(bgH + 15) % 360},22%,3.5%)`);
-  bg.addColorStop(1, `hsl(${(bgH + 30) % 360},28%,6%)`);
+  bg.addColorStop(0, '#0b0f1a');
+  bg.addColorStop(0.5, '#0d1225');
+  bg.addColorStop(1, '#080c18');
   ctx.fillStyle = bg;
-  ctx.fillRect(-15, -15, W + 30, H + 30);
+  ctx.fillRect(-20, -20, W + 40, H + 40);
 
   if (state === 'start') {
-    drawStart();
+    drawStartScreen();
     ctx.restore();
     return;
   }
 
-  // Death flash overlay
-  if (deathFlash > 0) {
-    ctx.fillStyle = `rgba(255,255,255,${clamp(deathFlash * 4, 0, 0.5)})`;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  drawRails();
-  drawSpeedLines();
-  drawWarnings();
+  drawTunnel();
+  drawHazards();
   drawGates();
   drawOrbs();
-  drawParticles();
+  drawTrail();
   drawPlayer();
+  drawParticles();
+
+  if (slowmoActive) drawSlowMoFX();
+
   drawHUD();
 
   if (state === 'gameover') drawGameOver();
@@ -591,277 +588,469 @@ function draw() {
   ctx.restore();
 }
 
-function drawRails() {
-  const glow = combo > 5 ? 0.55 : 0.3;
-  const rh = (185 + hueShift * 0.15) % 360;
+/* ---- Tunnel ---- */
+function drawTunnel() {
+  // Top wall
+  const tg = ctx.createLinearGradient(0, 0, 0, TUNNEL_PAD);
+  tg.addColorStop(0, hsl(tunnelHue, 50, 6));
+  tg.addColorStop(1, hsl(tunnelHue, 70, 14, 0.7));
+  ctx.fillStyle = tg;
+  ctx.fillRect(0, 0, W, TUNNEL_PAD);
 
-  ctx.shadowBlur = 6;
+  // Bottom wall
+  const bg2 = ctx.createLinearGradient(0, H - TUNNEL_PAD, 0, H);
+  bg2.addColorStop(0, hsl(tunnelHue + 30, 70, 14, 0.7));
+  bg2.addColorStop(1, hsl(tunnelHue + 30, 50, 6));
+  ctx.fillStyle = bg2;
+  ctx.fillRect(0, H - TUNNEL_PAD, W, TUNNEL_PAD);
 
-  // Top rail
-  ctx.shadowColor = `hsl(${rh},100%,50%)`;
-  ctx.strokeStyle = `hsla(${rh},75%,50%,${glow})`;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0, railTop); ctx.lineTo(W, railTop); ctx.stroke();
+  // Neon edge lines
+  ctx.strokeStyle = hsl(tunnelHue, 100, 50, 0.45);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, tunnelTop());
+  ctx.lineTo(W, tunnelTop());
+  ctx.stroke();
 
-  // Bottom rail
-  const rh2 = (rh + 115) % 360;
-  ctx.shadowColor = `hsl(${rh2},100%,50%)`;
-  ctx.strokeStyle = `hsla(${rh2},75%,50%,${glow})`;
-  ctx.beginPath(); ctx.moveTo(0, railBot); ctx.lineTo(W, railBot); ctx.stroke();
+  ctx.strokeStyle = hsl(tunnelHue + 30, 100, 50, 0.45);
+  ctx.beginPath();
+  ctx.moveTo(0, tunnelBot());
+  ctx.lineTo(W, tunnelBot());
+  ctx.stroke();
 
-  ctx.shadowBlur = 0;
-}
-
-function drawWarnings() {
-  for (const g of gates) {
-    if (g.passed || g.x <= player.x || g.x > W + 40) continue;
-    const d = g.x - player.x;
-    const a = clamp(1 - d / 280, 0, 0.25);
-    if (a < 0.015) continue;
-    ctx.globalAlpha = a * 0.45;
-    ctx.strokeStyle = gateCSS(g.safeType);
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 7]);
+  // Scrolling grid
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 0.5;
+  const gridSp = 40;
+  const off = distTravelled % gridSp;
+  for (let x = -off; x < W; x += gridSp) {
     ctx.beginPath();
-    ctx.moveTo(g.x + g.w * 0.5, railTop);
-    ctx.lineTo(g.x + g.w * 0.5, railBot);
+    ctx.moveTo(x, tunnelTop());
+    ctx.lineTo(x, tunnelBot());
     ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
   }
+  for (let y = tunnelTop(); y <= tunnelBot(); y += gridSp) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
 }
 
+/* ---- Gates ---- */
 function drawGates() {
   for (const g of gates) {
-    if (g.x > W + 25 || g.x + g.w < -25) continue;
-    const [h, s, l] = gateHSL(g.safeType);
-    const col = `hsl(${h},${s}%,${l}%)`;
-    const gt = g.gapY - g.gapSize * 0.5;
-    const gb = g.gapY + g.gapSize * 0.5;
+    if (g.x < -50 || g.x > W + 50) continue;
+    const r = g.radius;
+    const pulseR = r + Math.sin(runTime * 5 + g.x * 0.03) * 2.5;
 
-    ctx.shadowColor = col;
-    ctx.shadowBlur = 10;
-    ctx.globalAlpha = g.scored ? 0.25 : 0.82;
-    ctx.fillStyle = col;
-
-    // Upper barrier
-    if (gt > railTop + 1) {
-      ctx.fillRect(g.x, railTop, g.w, gt - railTop);
-    }
-    // Lower barrier
-    if (gb < railBot - 1) {
-      ctx.fillRect(g.x, gb, g.w, railBot - gb);
-    }
-
-    // Gap edge highlights
-    if (!g.scored) {
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = `hsl(${h},${s}%,${Math.min(l + 20, 90)}%)`;
-      ctx.fillRect(g.x - 1, gt - 2.5, g.w + 2, 2.5);
-      ctx.fillRect(g.x - 1, gb, g.w + 2, 2.5);
-    }
-
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1;
-  }
-}
-
-function drawOrbs() {
-  for (const orb of orbs) {
-    if (!orb.alive || orb.x > W + 25 || orb.x < -25) continue;
-    const p = Math.sin(orb.pulse) * 0.3 + 0.7;
-    const r = ORB_R * p + 2;
-
-    ctx.shadowColor = '#ffff00';
     ctx.shadowBlur = 14;
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = '#ffff00';
-    ctx.beginPath(); ctx.arc(orb.x, orb.y, r + 3, 0, 6.2832); ctx.fill();
-
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(orb.x, orb.y, r * 0.55, 0, 6.2832); ctx.fill();
-
+    if (g.isBank) {
+      ctx.strokeStyle = hsl(50, 100, 60, 0.9);
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = hsl(50, 100, 55);
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, pulseR, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner double ring
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = hsl(50, 90, 70, 0.5);
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, pulseR * 0.65, 0, Math.PI * 2);
+      ctx.stroke();
+      // $ text
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = hsl(50, 100, 75);
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', g.x, g.y);
+    } else {
+      ctx.strokeStyle = hsl(g.hue, 100, 55, 0.8);
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = hsl(g.hue, 100, 55);
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, pulseR, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner glow ring
+      ctx.strokeStyle = hsl(g.hue, 70, 65, 0.25);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, pulseR * 0.55, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.shadowBlur = 0;
-    ctx.globalAlpha = 1;
   }
 }
 
-function drawPlayer() {
-  const px = player.x, py = player.y;
-  const gh = player.grav > 0 ? 185 : 300;
-  const cg = Math.min(combo * 2, 18);
+/* ---- Hazards ---- */
+function drawHazards() {
+  for (const h of hazards) {
+    if (h.x < -70 || h.x > W + 70) continue;
 
-  ctx.shadowColor = `hsl(${gh},100%,60%)`;
-  ctx.shadowBlur = 10 + cg;
+    if (h.type === 'laser') {
+      if (!h.active) {
+        // Telegraph
+        const t = 1 - h.telegraph / h.telegraphMax;
+        ctx.globalAlpha = 0.12 + t * 0.35;
+        ctx.fillStyle = hsl(0, 100, 50);
+        ctx.fillRect(h.x - h.w / 2 - 3, h.y, h.w + 6, h.h);
+        // Warning stripes
+        ctx.strokeStyle = hsl(0, 100, 60, 0.5 * t);
+        ctx.lineWidth = 1;
+        const stripeGap = 10;
+        for (let yy = h.y; yy < h.y + h.h; yy += stripeGap) {
+          ctx.beginPath();
+          ctx.moveTo(h.x - h.w / 2 - 5, yy);
+          ctx.lineTo(h.x + h.w / 2 + 5, yy);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      } else {
+        // Active laser
+        ctx.shadowColor = '#f00';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = hsl(0, 100, 55);
+        ctx.fillRect(h.x - h.w / 2, h.y, h.w, h.h);
+        ctx.fillStyle = hsl(0, 80, 85);
+        ctx.fillRect(h.x - 1, h.y, 2, h.h);
+        ctx.shadowBlur = 0;
+      }
+    } else if (h.type === 'crusher') {
+      const topY = tunnelTop();
+      const botY2 = h.botY;
+      const botH = tunnelBot() - botY2;
+      if (!h.active) {
+        const t = 1 - h.telegraph / h.telegraphMax;
+        ctx.globalAlpha = 0.12 + t * 0.35;
+        ctx.fillStyle = hsl(30, 80, 42);
+        ctx.fillRect(h.x - h.w / 2, topY, h.w, h.topH);
+        ctx.fillRect(h.x - h.w / 2, botY2, h.w, botH);
+        // Arrows
+        ctx.fillStyle = hsl(30, 100, 60, t * 0.8);
+        const as = 5;
+        ctx.beginPath();
+        ctx.moveTo(h.x, topY + h.topH + as);
+        ctx.lineTo(h.x - as, topY + h.topH);
+        ctx.lineTo(h.x + as, topY + h.topH);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(h.x, botY2 - as);
+        ctx.lineTo(h.x - as, botY2);
+        ctx.lineTo(h.x + as, botY2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.shadowColor = hsl(30, 100, 50);
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = hsl(30, 85, 48);
+        ctx.fillRect(h.x - h.w / 2, topY, h.w, h.topH);
+        ctx.fillRect(h.x - h.w / 2, botY2, h.w, botH);
+        // Teeth
+        ctx.fillStyle = hsl(30, 75, 62);
+        const ts = 4;
+        for (let tx = h.x - h.w / 2; tx < h.x + h.w / 2; tx += ts * 2) {
+          ctx.beginPath();
+          ctx.moveTo(tx, topY + h.topH);
+          ctx.lineTo(tx + ts, topY + h.topH + ts);
+          ctx.lineTo(tx + ts * 2, topY + h.topH);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(tx, botY2);
+          ctx.lineTo(tx + ts, botY2 - ts);
+          ctx.lineTo(tx + ts * 2, botY2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+}
 
-  // Trail
-  ctx.globalAlpha = 0.12;
-  ctx.fillStyle = `hsl(${gh},100%,60%)`;
-  ctx.beginPath(); ctx.ellipse(px - 9, py, 16, PLAYER_R * 0.65, 0, 0, 6.2832); ctx.fill();
+/* ---- Orbs ---- */
+function drawOrbs() {
+  for (const o of orbs) {
+    if (o.x < -20 || o.x > W + 20) continue;
+    const pulse = 1 + Math.sin(o.pulse) * 0.15;
+    const r = o.radius * pulse;
+    // Outer glow
+    ctx.fillStyle = hsl(120, 80, 50, 0.2);
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r + 6, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.shadowColor = hsl(120, 100, 55);
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = hsl(120, 100, 58);
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = hsl(120, 70, 82);
+    ctx.beginPath();
+    ctx.arc(o.x - 2, o.y - 2, r * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
 
-  // Core
+/* ---- Trail ---- */
+function drawTrail() {
+  if (!player || !player.trail) return;
+
+  if (slowmoActive) {
+    // Chromatic aberration
+    for (let i = 0; i < player.trail.length; i++) {
+      const t = player.trail[i];
+      if (t.a <= 0) continue;
+      const a = clamp(t.a, 0, 1) * 0.25;
+      const sz = PLAYER_R * (0.25 + i / player.trail.length * 0.5);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = hsl(0, 100, 60);
+      ctx.beginPath();
+      ctx.arc(t.x - 2, t.y - 1, sz, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = hsl(180, 100, 60);
+      ctx.beginPath();
+      ctx.arc(t.x + 2, t.y + 1, sz, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    for (let i = 0; i < player.trail.length; i++) {
+      const t = player.trail[i];
+      if (t.a <= 0) continue;
+      ctx.globalAlpha = clamp(t.a, 0, 1) * 0.35;
+      ctx.fillStyle = hsl(t.hue, 80, 55);
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, PLAYER_R * (0.25 + i / player.trail.length * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.globalAlpha = 1;
-  const cg2 = ctx.createRadialGradient(px, py, 0, px, py, PLAYER_R);
-  cg2.addColorStop(0, '#fff');
-  cg2.addColorStop(0.4, `hsl(${gh},88%,68%)`);
-  cg2.addColorStop(1, `hsl(${gh},100%,42%)`);
-  ctx.fillStyle = cg2;
-  ctx.beginPath(); ctx.arc(px, py, PLAYER_R, 0, 6.2832); ctx.fill();
+}
 
-  // Shield ring
-  if (orbShield) {
-    ctx.strokeStyle = 'hsla(50,100%,60%,0.65)';
-    ctx.lineWidth = 2;
-    ctx.shadowColor = '#ffff00';
-    ctx.shadowBlur = 9;
-    ctx.beginPath(); ctx.arc(px, py, PLAYER_R + 5, 0, 6.2832); ctx.stroke();
-  }
-
+/* ---- Player ---- */
+function drawPlayer() {
+  if (!player) return;
+  ctx.shadowColor = hsl(player.hue, 100, 58);
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = hsl(player.hue, 90, 55);
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, PLAYER_R, 0, Math.PI * 2);
+  ctx.fill();
   ctx.shadowBlur = 0;
+  ctx.fillStyle = hsl(player.hue, 60, 82);
+  ctx.beginPath();
+  ctx.arc(player.x - 2, player.y - 2, PLAYER_R * 0.4, 0, Math.PI * 2);
+  ctx.fill();
 }
 
-function drawHUD() {
-  // Score top-center
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 22px "Segoe UI",system-ui,sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(score.toString(), W * 0.5, 10);
-
-  // Combo
-  if (combo > 0) {
-    const ca = clamp(combo / 3, 0, 1);
-    const ch = (combo * 28 + 185) % 360;
-    ctx.fillStyle = `hsla(${ch},100%,65%,${ca})`;
-    ctx.font = 'bold 13px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText(`x${comboMult.toFixed(1)}  COMBO ${combo}`, W * 0.5, 36);
-  }
-
-  // Shield label
-  if (orbShield) {
-    ctx.fillStyle = 'hsla(50,100%,60%,0.75)';
-    ctx.font = '10px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText('SHIELD', W * 0.5, 52);
-  }
-}
-
-function drawStart() {
-  // BG
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, 'hsl(220,38%,5%)');
-  bg.addColorStop(0.5, 'hsl(240,28%,3.5%)');
-  bg.addColorStop(1, 'hsl(260,38%,6%)');
-  ctx.fillStyle = bg;
+/* ---- Slow-mo vignette ---- */
+function drawSlowMoFX() {
+  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.18, W / 2, H / 2, H * 0.65);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(20,0,50,0.35)');
+  ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
+}
 
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+/* ---- HUD ---- */
+function drawHUD() {
+  const sc = Math.floor(displayScore);
 
-  // Decorative pulse core
-  const pY = H * 0.25;
-  ctx.shadowColor = 'hsl(185,100%,50%)';
-  ctx.shadowBlur = 22;
-  const pg = ctx.createRadialGradient(W * 0.5, pY, 0, W * 0.5, pY, 16);
-  pg.addColorStop(0, '#fff');
-  pg.addColorStop(0.45, 'hsl(185,90%,68%)');
-  pg.addColorStop(1, 'hsl(185,100%,42%)');
-  ctx.fillStyle = pg;
-  ctx.beginPath(); ctx.arc(W * 0.5, pY, 16, 0, 6.2832); ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Title
-  ctx.shadowColor = 'hsl(185,100%,50%)';
-  ctx.shadowBlur = 20;
+  // Score
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 36px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('GRAVITY FLIP', W * 0.5, H * 0.34);
-
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = 'hsl(185,75%,58%)';
-  ctx.font = '15px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('PULSE GATES', W * 0.5, H * 0.34 + 32);
-  ctx.shadowBlur = 0;
-
-  // Instructions
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.font = '12px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('Tap or Space to flip gravity', W * 0.5, H * 0.48);
-  ctx.fillText('Pass through gates to score', W * 0.5, H * 0.48 + 20);
-  ctx.fillText('Near-miss = combo bonus!', W * 0.5, H * 0.48 + 40);
-
-  // Gate color legend
-  ctx.font = '12px "Segoe UI",system-ui,sans-serif';
-  ctx.fillStyle = 'hsl(185,100%,55%)';
-  ctx.fillText('Cyan = Top safe', W * 0.5, H * 0.62);
-  ctx.fillStyle = 'hsl(300,100%,60%)';
-  ctx.fillText('Magenta = Bottom safe', W * 0.5, H * 0.62 + 18);
-  ctx.fillStyle = 'hsl(50,100%,55%)';
-  ctx.fillText('Yellow = Center only', W * 0.5, H * 0.62 + 36);
-
-  // Tap prompt
-  const ta = 0.45 + Math.sin(performance.now() * 0.002) * 0.3;
-  ctx.fillStyle = `rgba(255,255,255,${ta})`;
-  ctx.font = 'bold 17px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('TAP TO START', W * 0.5, H * 0.8);
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(sc, 12, 8);
 
   // Best
-  if (best > 0) {
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.font = '12px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText('Best: ' + best, W * 0.5, H * 0.87);
+  ctx.fillStyle = '#556';
+  ctx.font = '11px monospace';
+  ctx.fillText('BEST ' + bestScore, 12, 30);
+
+  // Multiplier
+  const multHue = lerp(180, 300, clamp((multiplier - 1) / 9, 0, 1));
+  ctx.fillStyle = hsl(multHue, 100, 60);
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('x' + multiplier, W - 12, 8);
+
+  // Fuel pips
+  const pipY = 30;
+  const pipW = 14, pipH = 7, pipGap = 3;
+  const totalFuelW = MAX_FUEL * (pipW + pipGap) - pipGap;
+  const fuelStartX = W - 12 - totalFuelW;
+
+  for (let i = 0; i < MAX_FUEL; i++) {
+    const px = fuelStartX + i * (pipW + pipGap);
+    ctx.fillStyle = i < Math.floor(fuel) ? hsl(180, 90, 52) : 'rgba(255,255,255,0.12)';
+    ctx.fillRect(px, pipY, pipW, pipH);
+    if (i < Math.floor(fuel)) {
+      ctx.fillStyle = hsl(180, 70, 78);
+      ctx.fillRect(px + 1, pipY + 1, pipW - 2, 2);
+    }
+  }
+
+  // Fractional pip
+  const frac = fuel - Math.floor(fuel);
+  const fi = Math.floor(fuel);
+  if (frac > 0.02 && fi < MAX_FUEL) {
+    const px = fuelStartX + fi * (pipW + pipGap);
+    ctx.fillStyle = hsl(180, 90, 52, frac * 0.8);
+    ctx.fillRect(px, pipY, pipW * frac, pipH);
   }
 }
 
+/* ---- Start screen ---- */
+function drawStartScreen() {
+  startAnimTime += 0.016;
+
+  // Subtle grid bg
+  ctx.globalAlpha = 0.035;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 28) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 28) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Floating particles (decorative)
+  const t = startAnimTime;
+  for (let i = 0; i < 6; i++) {
+    const px = W * 0.2 + Math.sin(t * 0.7 + i * 1.3) * W * 0.3;
+    const py = H * 0.35 + Math.cos(t * 0.5 + i * 0.9) * H * 0.15;
+    const hueP = (190 + i * 30 + t * 20) % 360;
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = hsl(hueP, 100, 60);
+    ctx.beginPath();
+    ctx.arc(px, py, 3 + Math.sin(t + i) * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Title
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = hsl(190, 100, 55);
+  ctx.shadowBlur = 25;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText('GRAVITY', W / 2, H * 0.28);
+  ctx.fillStyle = hsl(190, 100, 65);
+  ctx.font = 'bold 38px monospace';
+  ctx.fillText('FLIP', W / 2, H * 0.28 + 42);
+  ctx.shadowBlur = 0;
+
+  // Subtitle
+  ctx.fillStyle = hsl(320, 80, 58);
+  ctx.font = '13px monospace';
+  ctx.fillText('H E A T L I N E', W / 2, H * 0.28 + 78);
+
+  // Instructions
+  ctx.fillStyle = '#778';
+  ctx.font = '12px monospace';
+  const iy = H * 0.52;
+  const lines = [
+    'Tap / Space to flip gravity',
+    'Thread heat gates for combo',
+    'Tap mid-flip for slow-mo (costs fuel)',
+    'Collect green orbs to refuel',
+    'Bank gates ($) cash out your combo'
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], W / 2, iy + i * 20);
+  }
+
+  // Tap to start
+  const pulseA = 0.45 + Math.sin(Date.now() / 350) * 0.35;
+  ctx.globalAlpha = clamp(pulseA, 0.1, 0.9);
+  ctx.fillStyle = hsl(190, 100, 68);
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('TAP TO START', W / 2, H * 0.78);
+  ctx.globalAlpha = 1;
+
+  if (bestScore > 0) {
+    ctx.fillStyle = '#445';
+    ctx.font = '12px monospace';
+    ctx.fillText('Best: ' + bestScore, W / 2, H * 0.85);
+  }
+}
+
+/* ---- Game over screen ---- */
 function drawGameOver() {
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(5,8,18,0.78)';
+  ctx.fillRect(-20, -20, W + 40, H + 40);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  ctx.shadowColor = '#ff4444';
+  ctx.shadowColor = hsl(0, 90, 50);
   ctx.shadowBlur = 18;
-  ctx.fillStyle = '#ff4444';
-  ctx.font = 'bold 30px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('GAME OVER', W * 0.5, H * 0.32);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 30px monospace';
+  ctx.fillText('GAME OVER', W / 2, H * 0.28);
   ctx.shadowBlur = 0;
 
+  // Score
+  const sc = Math.floor(score);
+  ctx.fillStyle = '#556';
+  ctx.font = '11px monospace';
+  ctx.fillText('SCORE', W / 2, H * 0.39);
+  ctx.fillStyle = hsl(190, 90, 65);
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText(sc, W / 2, H * 0.43 + 4);
+
+  // Best
+  ctx.fillStyle = '#556';
+  ctx.font = '11px monospace';
+  ctx.fillText('BEST', W / 2, H * 0.53);
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 24px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('Score: ' + score, W * 0.5, H * 0.44);
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(bestScore, W / 2, H * 0.57);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.font = '15px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('Best: ' + best, W * 0.5, H * 0.51);
+  // Max multiplier
+  ctx.fillStyle = hsl(270, 85, 62);
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('x' + maxMultReached + ' max combo', W / 2, H * 0.66);
 
-  if (score > 0 && score >= best) {
-    ctx.fillStyle = 'hsl(50,100%,60%)';
-    ctx.font = 'bold 13px "Segoe UI",system-ui,sans-serif';
-    ctx.fillText('NEW BEST!', W * 0.5, H * 0.57);
+  // New best indicator
+  if (Math.floor(score) >= bestScore && bestScore > 0) {
+    ctx.fillStyle = hsl(50, 100, 60);
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText('NEW BEST!', W / 2, H * 0.72);
   }
 
-  const ta = 0.45 + Math.sin(performance.now() * 0.002) * 0.3;
-  ctx.fillStyle = `rgba(255,255,255,${ta})`;
-  ctx.font = 'bold 15px "Segoe UI",system-ui,sans-serif';
-  ctx.fillText('TAP TO RETRY', W * 0.5, H * 0.72);
+  // Tap to retry
+  const pulseA = 0.45 + Math.sin(Date.now() / 350) * 0.35;
+  ctx.globalAlpha = clamp(pulseA, 0.1, 0.9);
+  ctx.fillStyle = hsl(190, 100, 68);
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('TAP TO RETRY', W / 2, H * 0.82);
+  ctx.globalAlpha = 1;
 }
 
-// --- Main Loop ---
+/* ========== Main loop ========== */
+prevTime = performance.now();
+
 function loop(now) {
-  if (!lastT) lastT = now;
-  let dt = (now - lastT) * 0.001;
-  lastT = now;
-  if (dt > 0.1) dt = 0.016; // cap to prevent spiral
-
-  update(dt);
-  draw();
   requestAnimationFrame(loop);
+  const rawDt = (now - prevTime) / 1000;
+  prevTime = now;
+  const dt = Math.min(rawDt, 1 / 30);
+
+  if (state === 'playing') {
+    update(dt);
+  }
+  draw();
 }
 
-// --- Boot ---
-initRound();
-state = 'start';
 requestAnimationFrame(loop);
 
 })();
